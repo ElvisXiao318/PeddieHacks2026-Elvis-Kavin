@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en-CA" data-theme="light" data-colorblind="false">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Dashboard — CareConnect</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon" aria-hidden="true">+</span>
+        CareConnect
+      </a>
+      <span style="color:var(--text-muted);font-size:0.9rem;">Patient Portal</span>
+      <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button type="button" id="theme-toggle" class="btn btn-sm" aria-pressed="false">🌙 Dark</button>
+        <button type="button" id="colorblind-toggle" class="btn btn-sm" aria-pressed="false">◫ Textures</button>
+        <button type="button" id="sideways-toggle" class="btn btn-sm" aria-pressed="false">↻ Sideways</button>
+        <button type="button" id="logout-btn" class="btn btn-sm">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container dashboard-layout">
+    <aside class="sidebar">
+      <nav aria-label="Patient navigation">
+        <button type="button" class="active" data-panel="pending">Pending Issues</button>
+        <button type="button" data-panel="appointment">Book an Appointment</button>
+        <button type="button" data-panel="health">Personal Health Information</button>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <h1 class="page-title">Patient Dashboard</h1>
+      <p class="page-subtitle">Manage pending issues, appointments, and your health information.</p>
+
+      <!-- Pending Issues -->
+      <section id="panel-pending" class="panel active">
+        <p style="color:var(--text-muted);font-size:0.9rem;margin:0 0 1rem;">Unresolved cases and missed communications awaiting your attention. Status indicators include colourblind-friendly textures when enabled.</p>
+
+        <h2 style="font-size:1.1rem;margin:0 0 0.75rem;">Unresolved Cases</h2>
+        <div class="list-card" id="cases-list" aria-label="Unresolved cases" style="margin-bottom:1.5rem;"></div>
+
+        <h2 style="font-size:1.1rem;margin:0 0 0.75rem;">Missed Communications</h2>
+        <div class="list-card" id="missed-list" aria-label="Log of missed communications"></div>
+      </section>
+
+      <!-- Book an Appointment -->
+      <section id="panel-appointment" class="panel">
+        <div class="demo-notice">Full calendar scheduling is listed as a future development (Step 2). You can request appointments below for demo purposes.</div>
+
+        <div class="card">
+          <h3>Book an Appointment</h3>
+          <form id="appointment-form">
+            <div class="form-group">
+              <label for="appt-type">Appointment type</label>
+              <select id="appt-type" required>
+                <option value="">Select type…</option>
+                <option value="follow-up">Follow-up</option>
+                <option value="consultation">Consultation</option>
+                <option value="lab-review">Lab review</option>
+                <option value="general">General visit</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="appt-date">Preferred date</label>
+              <input type="date" id="appt-date" required>
+            </div>
+            <div class="form-group">
+              <label for="appt-time">Preferred time</label>
+              <select id="appt-time" required>
+                <option value="">Select time…</option>
+                <option value="09:00 AM">09:00 AM</option>
+                <option value="10:30 AM">10:30 AM</option>
+                <option value="02:00 PM">02:00 PM</option>
+                <option value="03:30 PM">03:30 PM</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="appt-notes">Notes (optional)</label>
+              <textarea id="appt-notes" placeholder="Any details for your care team…"></textarea>
+              <div class="speech-controls">
+                <button type="button" class="btn btn-sm" data-stt="appt-notes">🎤 Speak</button>
+                <span class="listening" aria-live="polite"></span>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Request Appointment</button>
+          </form>
+        </div>
+
+        <h2 style="font-size:1.1rem;margin:1.5rem 0 0.75rem;">Upcoming Appointments</h2>
+        <div class="list-card" id="appointments-list" aria-label="Future appointments"></div>
+      </section>
+
+      <!-- Personal Health Information -->
+      <section id="panel-health" class="panel">
+        <div class="card" style="margin-bottom:1.25rem;">
+          <h3 id="health-profile-heading">Personal Details</h3>
+          <dl class="health-info" id="health-profile">
+            <div><dt>Name</dt><dd>Demo Patient</dd></div>
+            <div><dt>Date of birth</dt><dd>1990-04-15</dd></div>
+            <div><dt>Health card</dt><dd>****-****-1234</dd></div>
+            <div><dt>Primary provider</dt><dd>Dr. Sarah Chen</dd></div>
+            <div><dt>Hospital</dt><dd>Awaiting hospital data</dd></div>
+          </dl>
+          <div class="speech-controls">
+            <button type="button" class="btn btn-sm" data-tts="health-profile">🔊 Read Aloud</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem;">
+          <h3>Active Medications</h3>
+          <div class="list-card" id="medications-list" aria-label="Active medications"></div>
+        </div>
+
+        <div class="card">
+          <h3>Track Ongoing Symptoms</h3>
+          <p style="color:var(--text-muted);font-size:0.9rem;margin:0 0 1rem;">Log symptoms to help your care team respond quickly.</p>
+          <form id="symptom-form">
+            <div class="form-group">
+              <label for="symptom-input">Describe your symptom</label>
+              <textarea id="symptom-input" placeholder="e.g. Persistent headache since Monday…" required></textarea>
+              <div class="speech-controls">
+                <button type="button" class="btn btn-sm" data-stt="symptom-input">🎤 Speak</button>
+                <span class="listening" aria-live="polite"></span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="symptom-severity">Severity</label>
+              <select id="symptom-severity" required>
+                <option value="mild">Mild</option>
+                <option value="moderate">Moderate</option>
+                <option value="severe">Severe</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Log Symptom</button>
+          </form>
+        </div>
+
+        <h2 style="font-size:1.1rem;margin:1.5rem 0 0.75rem;">Tracked Symptoms</h2>
+        <div class="list-card" id="symptoms-list" aria-label="Tracked symptoms"></div>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/patient.js"></script>
+</body>
+</html>
