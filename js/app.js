@@ -31,7 +31,7 @@ function applyTheme(theme) {
   setStored(STORAGE_KEYS.theme, theme);
   const btn = document.getElementById('theme-toggle');
   if (btn) {
-    btn.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+    btn.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
     btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
   }
 }
