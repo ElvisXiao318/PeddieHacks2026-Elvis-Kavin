@@ -529,6 +529,66 @@ a:hover {
   font-size: 0.95rem;
 }
 
+.dashboard-heading,
+.panel-heading,
+.card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.dashboard-heading {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-heading .page-title {
+  margin-bottom: 0.2rem;
+}
+
+.section-kicker {
+  margin: 0 0 0.3rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.secure-badge,
+.facility-selected-label {
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  white-space: nowrap;
+}
+
+.panel-heading {
+  margin-bottom: 1rem;
+}
+
+.panel-heading h2,
+.card-heading h3 {
+  margin: 0;
+}
+
+.card-heading {
+  margin-bottom: 1rem;
+}
+
+.card-heading .btn {
+  flex-shrink: 0;
+}
+
+.card-description {
+  margin-top: 0.35rem !important;
+}
+
 .panel {
   display: none;
 }
@@ -540,6 +600,434 @@ a:hover {
 .panel-grid {
   display: grid;
   gap: 1.25rem;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin: 1.25rem 0;
+}
+
+.profile-info {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+
+.profile-info div {
+  grid-template-columns: 1fr;
+  gap: 0.15rem;
+  padding-bottom: 0.7rem;
+}
+
+.profile-info div:nth-last-child(-n + 2) {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.appointment-list {
+  margin-bottom: 1.25rem;
+}
+
+.appointment-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.appointment-item:last-child {
+  border-bottom: none;
+}
+
+.appointment-date {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  min-height: 62px;
+  padding: 0.45rem 0.25rem;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  line-height: 1.1;
+  text-align: center;
+}
+
+.appointment-date span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.appointment-date strong {
+  font-size: 1.35rem;
+}
+
+.appointment-details h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.appointment-details p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.appointment-details .section-kicker {
+  margin-bottom: 0.15rem;
+}
+
+.appointment-details .appointment-reason {
+  margin-top: 0.3rem;
+  color: var(--text);
+}
+
+.appointment-status,
+.item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.severity-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+}
+
+.severity-low {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+
+.severity-medium {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+
+.severity-high {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+
+.facility-card {
+  margin-bottom: 1.25rem;
+}
+
+.facility-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(250px, 0.85fr);
+  gap: 1.25rem;
+}
+
+.facility-map {
+  position: relative;
+  min-height: 300px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(20deg, transparent 47%, color-mix(in srgb, var(--primary) 12%, transparent) 48%, color-mix(in srgb, var(--primary) 12%, transparent) 52%, transparent 53%),
+    linear-gradient(112deg, transparent 42%, color-mix(in srgb, var(--accent) 15%, transparent) 43%, color-mix(in srgb, var(--accent) 15%, transparent) 47%, transparent 48%),
+    linear-gradient(150deg, color-mix(in srgb, var(--bg-elevated) 90%, var(--accent) 10%), var(--bg-elevated));
+}
+
+.map-road {
+  position: absolute;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-card) 76%, var(--primary) 24%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 15%, transparent);
+  opacity: 0.85;
+}
+
+.map-road-one {
+  width: 130%;
+  height: 24px;
+  top: 44%;
+  left: -15%;
+  transform: rotate(-17deg);
+}
+
+.map-road-two {
+  width: 120%;
+  height: 16px;
+  top: 15%;
+  left: -8%;
+  transform: rotate(28deg);
+}
+
+.map-road-three {
+  width: 75%;
+  height: 14px;
+  top: 65%;
+  left: 20%;
+  transform: rotate(65deg);
+}
+
+.map-label {
+  position: absolute;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.map-label-north {
+  top: 0.8rem;
+  left: 1rem;
+}
+
+.map-label-south {
+  right: 1rem;
+  bottom: 0.8rem;
+}
+
+.map-marker {
+  position: absolute;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 3px solid var(--bg-card);
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: transform var(--transition), background var(--transition);
+}
+
+.map-marker:hover,
+.map-marker.active {
+  background: var(--accent);
+  transform: translate(-50%, -50%) scale(1.35);
+}
+
+.map-marker.active {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.selected-facility {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.selected-facility h4 {
+  margin: 0 0 0.2rem;
+}
+
+.selected-facility p {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.facility-directory > label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.facility-directory input[type="search"] {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.facility-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.facility-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.facility-item:last-child {
+  border-bottom: none;
+}
+
+.facility-item:hover,
+.facility-item.active {
+  background: var(--accent-soft);
+}
+
+.facility-item:focus-visible,
+.status-tab:focus-visible,
+.map-marker:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.facility-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.facility-item-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 0.1rem;
+}
+
+.facility-item-copy strong {
+  overflow: hidden;
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.facility-item-copy small {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.contact-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.contact-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.contact-item h4 {
+  margin: 0 0 0.15rem;
+  font-size: 0.92rem;
+}
+
+.contact-item p,
+.contact-item a {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.contact-item a {
+  color: var(--primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.status-tab {
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.status-tab span {
+  display: inline-grid;
+  min-width: 1.35rem;
+  margin-left: 0.25rem;
+  padding: 0.1rem 0.25rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  font-size: 0.72rem;
+  place-items: center;
+}
+
+.status-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.status-tab.active span {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.symptom-status-panel {
+  display: none;
+}
+
+.symptom-status-panel.active {
+  display: block;
+}
+
+.symptom-status-panel > .list-card {
+  margin-bottom: 1.25rem;
+}
+
+.nested-card {
+  box-shadow: none;
+}
+
+.symptom-form-card {
+  margin-top: 1.25rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.empty-state {
+  padding: 1.25rem;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .stat-row {
@@ -809,6 +1297,21 @@ tr:last-child td {
   font-size: 0.95rem;
 }
 
+.health-info.profile-info {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.health-info.profile-info div {
+  grid-template-columns: 1fr;
+  gap: 0.15rem;
+  padding-bottom: 0.7rem;
+}
+
+.health-info.profile-info div:nth-last-child(-n + 2) {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
 @media (max-width: 480px) {
   .health-info div {
     grid-template-columns: 1fr;
@@ -850,6 +1353,18 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-heading,
+  .panel-heading,
+  .card-heading {
+    flex-direction: column;
+  }
+
+  .dashboard-heading .secure-badge,
+  .panel-heading > .btn,
+  .card-heading > .btn {
+    align-self: flex-start;
+  }
+
   .sidebar {
     position: static;
   }
@@ -878,6 +1393,19 @@ tr:last-child td {
   .a11y-toolbar {
     justify-content: center;
   }
+
+  .facility-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .appointment-status {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
@@ -890,6 +1418,35 @@ tr:last-child td {
   }
 
   .form-actions {
+    flex-direction: column;
+  }
+
+  .profile-info,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-info div:nth-last-child(-n + 2) {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.7rem;
+  }
+
+  .profile-info div:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .appointment-item {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment-status {
+    grid-column: auto;
+  }
+
+  .selected-facility,
+  .contact-item {
+    align-items: flex-start;
     flex-direction: column;
   }
 

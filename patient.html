@@ -24,34 +24,211 @@
   <div class="container dashboard-layout">
     <aside class="sidebar">
       <nav aria-label="Patient navigation">
-        <button type="button" class="active" data-panel="pending">Pending Issues</button>
+        <button type="button" class="active" data-panel="overview">Overview</button>
+        <button type="button" data-panel="symptoms">Symptoms / Issues</button>
         <button type="button" data-panel="appointment">Book an Appointment</button>
-        <button type="button" data-panel="health">Personal Health Information</button>
       </nav>
     </aside>
 
     <div class="main-content">
-      <h1 class="page-title">Patient Dashboard</h1>
-      <p class="page-subtitle">Manage pending issues, appointments, and your health information.</p>
+      <div class="dashboard-heading">
+        <div>
+          <p class="section-kicker">Patient portal</p>
+          <h1 class="page-title">Welcome back, Demo Patient</h1>
+          <p class="page-subtitle">Keep your visits, health details, and active issues in one place.</p>
+        </div>
+        <span class="secure-badge">Secure patient view</span>
+      </div>
 
-      <!-- Pending Issues -->
-      <section id="panel-pending" class="panel active">
-        <p style="color:var(--text-muted);font-size:0.9rem;margin:0 0 1rem;">Unresolved cases and missed communications awaiting your attention.</p>
+      <!-- Overview -->
+      <section id="panel-overview" class="panel active">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Overview</p>
+            <h2>Upcoming appointments</h2>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" data-jump-panel="appointment">Book a visit</button>
+        </div>
+        <div class="list-card appointment-list" id="appointments-list" aria-label="Upcoming appointments"></div>
 
-        <h2 style="font-size:1.1rem;margin:0 0 0.75rem;">Unresolved Cases</h2>
-        <div class="list-card" id="cases-list" aria-label="Unresolved cases" style="margin-bottom:1.5rem;"></div>
+        <div class="overview-grid">
+          <section class="card">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">Your profile</p>
+                <h3>Personal information</h3>
+              </div>
+              <button type="button" class="btn btn-sm" data-tts="health-profile">🔊 Read Aloud</button>
+            </div>
+            <dl class="health-info profile-info" id="health-profile">
+              <div><dt>Blood type</dt><dd>A positive</dd></div>
+              <div><dt>Age</dt><dd>36</dd></div>
+              <div><dt>Sex</dt><dd>Female</dd></div>
+              <div><dt>Health card</dt><dd>****-****-1234</dd></div>
+            </dl>
+          </section>
 
-        <h2 style="font-size:1.1rem;margin:0 0 0.75rem;">Missed Communications</h2>
-        <div class="list-card" id="missed-list" aria-label="Log of missed communications"></div>
+          <section class="card">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">People to call</p>
+                <h3>Emergency contacts</h3>
+              </div>
+            </div>
+            <div class="contact-list" id="emergency-contacts" aria-label="Emergency contacts"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">Current treatment</p>
+                <h3>Active medications</h3>
+              </div>
+            </div>
+            <div class="list-card" id="medications-list" aria-label="Active medications"></div>
+          </section>
+        </div>
+
+        <section class="card facility-card">
+          <div class="card-heading">
+            <div>
+              <p class="section-kicker">Care coordination</p>
+              <h3>Main care facility</h3>
+              <p class="card-description">Choose the hospital or facility you visit most often.</p>
+            </div>
+            <span class="facility-selected-label" id="selected-facility-label">Selected facility</span>
+          </div>
+
+          <div class="facility-layout">
+            <div>
+              <div class="facility-map" id="facility-map" aria-label="Map of nearby healthcare facilities"></div>
+              <div class="selected-facility" id="selected-facility" aria-live="polite"></div>
+            </div>
+            <div class="facility-directory">
+              <label for="facility-search">Search nearby facilities</label>
+              <input type="search" id="facility-search" placeholder="Search hospitals and clinics…" autocomplete="off">
+              <div class="facility-list" id="facility-list" aria-label="Nearby healthcare facilities"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-heading">
+            <div>
+              <p class="section-kicker">Stay connected</p>
+              <h3>Care team messages</h3>
+            </div>
+          </div>
+          <div class="list-card" id="missed-list" aria-label="Care team messages"></div>
+        </section>
+      </section>
+
+      <!-- Symptoms and Issues -->
+      <section id="panel-symptoms" class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Symptoms and issues</p>
+            <h2>Track how you are feeling</h2>
+            <p class="card-description">Active items stay pending until your care team closes them.</p>
+          </div>
+        </div>
+
+        <div class="status-tabs" role="tablist" aria-label="Symptom status">
+          <button type="button" class="status-tab active" role="tab" aria-selected="true" data-symptom-filter="pending">
+            Pending <span id="pending-count">0</span>
+          </button>
+          <button type="button" class="status-tab" role="tab" aria-selected="false" data-symptom-filter="resolved">
+            Resolved <span id="resolved-count">0</span>
+          </button>
+        </div>
+
+        <div class="symptom-status-panel active" id="symptom-status-pending">
+          <div class="list-card" id="pending-symptoms" aria-label="Pending symptoms and issues"></div>
+          <section class="card nested-card">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">Open care items</p>
+                <h3>Pending cases</h3>
+              </div>
+            </div>
+            <div class="list-card" id="cases-list" aria-label="Pending care cases"></div>
+          </section>
+        </div>
+
+        <div class="symptom-status-panel" id="symptom-status-resolved">
+          <div class="list-card" id="resolved-symptoms" aria-label="Resolved symptoms and issues"></div>
+        </div>
+
+        <section class="card symptom-form-card">
+          <div class="card-heading">
+            <div>
+              <p class="section-kicker">New entry</p>
+              <h3>Log a symptom</h3>
+              <p class="card-description">Add details so your care team can follow up.</p>
+            </div>
+          </div>
+          <form id="symptom-form">
+            <div class="form-group">
+              <label for="symptom-input">Describe your symptom or issue</label>
+              <textarea id="symptom-input" placeholder="e.g. Persistent headache since Monday…" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="symptom-severity">Severity</label>
+              <select id="symptom-severity" required>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Add to pending</button>
+          </form>
+        </section>
       </section>
 
       <!-- Book an Appointment -->
       <section id="panel-appointment" class="panel">
-        <div class="demo-notice">Full calendar scheduling is listed as a future development (Step 2). You can request appointments below for demo purposes.</div>
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Book an appointment</p>
+            <h2>Tell us what you need help with</h2>
+            <p class="card-description">Your request will be reviewed by the care team at your selected facility.</p>
+          </div>
+        </div>
 
         <div class="card">
-          <h3>Book an Appointment</h3>
           <form id="appointment-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="appt-date">Preferred date</label>
+                <input type="date" id="appt-date" required>
+              </div>
+              <div class="form-group">
+                <label for="appt-time">Preferred time</label>
+                <select id="appt-time" required>
+                  <option value="">Select time…</option>
+                  <option value="09:00 AM">09:00 AM</option>
+                  <option value="10:30 AM">10:30 AM</option>
+                  <option value="02:00 PM">02:00 PM</option>
+                  <option value="03:30 PM">03:30 PM</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="appt-reason">Primary issue / reason for visit</label>
+              <textarea id="appt-reason" placeholder="Briefly describe what you would like to discuss…" required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="appt-severity">Severity level</label>
+              <select id="appt-severity" required>
+                <option value="">Select severity…</option>
+                <option value="low">Low — routine care</option>
+                <option value="medium">Medium — needs attention soon</option>
+                <option value="high">High — urgent concern</option>
+              </select>
+            </div>
+
             <div class="form-group">
               <label for="appt-type">Appointment type</label>
               <select id="appt-type" required>
@@ -62,75 +239,10 @@
                 <option value="general">General visit</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="appt-date">Preferred date</label>
-              <input type="date" id="appt-date" required>
-            </div>
-            <div class="form-group">
-              <label for="appt-time">Preferred time</label>
-              <select id="appt-time" required>
-                <option value="">Select time…</option>
-                <option value="09:00 AM">09:00 AM</option>
-                <option value="10:30 AM">10:30 AM</option>
-                <option value="02:00 PM">02:00 PM</option>
-                <option value="03:30 PM">03:30 PM</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="appt-notes">Notes (optional)</label>
-              <textarea id="appt-notes" placeholder="Any details for your care team…"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Request Appointment</button>
+
+            <button type="submit" class="btn btn-primary">Request appointment</button>
           </form>
         </div>
-
-        <h2 style="font-size:1.1rem;margin:1.5rem 0 0.75rem;">Upcoming Appointments</h2>
-        <div class="list-card" id="appointments-list" aria-label="Future appointments"></div>
-      </section>
-
-      <!-- Personal Health Information -->
-      <section id="panel-health" class="panel">
-        <div class="card" style="margin-bottom:1.25rem;">
-          <h3 id="health-profile-heading">Personal Details</h3>
-          <dl class="health-info" id="health-profile">
-            <div><dt>Name</dt><dd>Demo Patient</dd></div>
-            <div><dt>Date of birth</dt><dd>1990-04-15</dd></div>
-            <div><dt>Health card</dt><dd>****-****-1234</dd></div>
-            <div><dt>Primary provider</dt><dd>Dr. Sarah Chen</dd></div>
-            <div><dt>Hospital</dt><dd>Awaiting hospital data</dd></div>
-          </dl>
-          <div class="speech-controls">
-            <button type="button" class="btn btn-sm" data-tts="health-profile">🔊 Read Aloud</button>
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom:1.25rem;">
-          <h3>Active Medications</h3>
-          <div class="list-card" id="medications-list" aria-label="Active medications"></div>
-        </div>
-
-        <div class="card">
-          <h3>Track Ongoing Symptoms</h3>
-          <p style="color:var(--text-muted);font-size:0.9rem;margin:0 0 1rem;">Log symptoms to help your care team respond quickly.</p>
-          <form id="symptom-form">
-            <div class="form-group">
-              <label for="symptom-input">Describe your symptom</label>
-              <textarea id="symptom-input" placeholder="e.g. Persistent headache since Monday…" required></textarea>
-            </div>
-            <div class="form-group">
-              <label for="symptom-severity">Severity</label>
-              <select id="symptom-severity" required>
-                <option value="mild">Mild</option>
-                <option value="moderate">Moderate</option>
-                <option value="severe">Severe</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Log Symptom</button>
-          </form>
-        </div>
-
-        <h2 style="font-size:1.1rem;margin:1.5rem 0 0.75rem;">Tracked Symptoms</h2>
-        <div class="list-card" id="symptoms-list" aria-label="Tracked symptoms"></div>
       </section>
     </div>
   </div>

@@ -5,21 +5,62 @@
 requireAuth('patient');
 
 const DEMO_APPOINTMENTS = [
-  { date: '2026-08-20', time: '10:30 AM', provider: 'Dr. Sarah Chen', type: 'Follow-up' },
-  { date: '2026-09-03', time: '2:00 PM', provider: 'Dr. Sarah Chen', type: 'Lab review' },
+  {
+    date: '2026-08-20',
+    time: '10:30 AM',
+    provider: 'Dr. Sarah Chen',
+    type: 'Follow-up',
+    reason: 'Review recent blood work',
+    severity: 'low',
+  },
+  {
+    date: '2026-09-03',
+    time: '02:00 PM',
+    provider: 'Dr. Sarah Chen',
+    type: 'Lab review',
+    reason: 'Discuss medication results',
+    severity: 'medium',
+  },
 ];
 
 const DEMO_SYMPTOMS = [
-  { text: 'Intermittent dizziness when standing', severity: 'moderate', date: '2026-08-10' },
+  {
+    text: 'Intermittent dizziness when standing',
+    severity: 'medium',
+    date: '2026-08-10',
+    status: 'pending',
+  },
+  {
+    text: 'Seasonal allergy symptoms',
+    severity: 'low',
+    date: '2026-07-22',
+    status: 'resolved',
+    resolvedDate: '2026-07-29',
+  },
 ];
 
 const DEMO_MISSED = [
-  { from: 'Dr. Sarah Chen', date: '2026-08-08', subject: 'Lab results follow-up', channel: 'Secure message' },
+  {
+    from: 'Dr. Sarah Chen',
+    date: '2026-08-08',
+    subject: 'Lab results follow-up',
+    channel: 'Secure message',
+  },
 ];
 
 const DEMO_CASES = [
-  { title: 'Lab results review', status: 'open', updated: '2026-08-12', note: 'Awaiting provider review of blood work.' },
-  { title: 'Medication adjustment request', status: 'pending', updated: '2026-08-11', note: 'Provider reviewing dosage change.' },
+  {
+    title: 'Lab results review',
+    status: 'open',
+    updated: '2026-08-12',
+    note: 'Awaiting provider review of blood work.',
+  },
+  {
+    title: 'Medication adjustment request',
+    status: 'pending',
+    updated: '2026-08-11',
+    note: 'Provider reviewing dosage change.',
+  },
 ];
 
 const DEMO_MEDICATIONS = [
@@ -27,153 +68,466 @@ const DEMO_MEDICATIONS = [
   { name: 'Lisinopril', dosage: '10 mg', frequency: 'Once daily' },
 ];
 
+const EMERGENCY_CONTACTS = [
+  { name: 'Alex Morgan', relationship: 'Partner', phone: '(416) 555-0188' },
+  { name: 'Dr. Sarah Chen', relationship: 'Primary provider', phone: '(416) 555-0124' },
+  { name: 'Emergency services', relationship: 'Immediate danger', phone: '911' },
+];
+
+const DEMO_FACILITIES = [
+  {
+    id: 'st-michaels',
+    name: "St. Michael's Hospital",
+    type: 'Hospital',
+    distance: '1.8 km away',
+    address: '30 Bond Street, Toronto, ON',
+    phone: '(416) 360-4000',
+    x: 28,
+    y: 36,
+  },
+  {
+    id: 'toronto-general',
+    name: 'Toronto General Hospital',
+    type: 'Hospital',
+    distance: '3.2 km away',
+    address: '200 Elizabeth Street, Toronto, ON',
+    phone: '(416) 340-3111',
+    x: 66,
+    y: 26,
+  },
+  {
+    id: 'womens-college',
+    name: "Women's College Hospital",
+    type: 'Specialty hospital',
+    distance: '2.5 km away',
+    address: '76 Grenville Street, Toronto, ON',
+    phone: '(416) 323-6400',
+    x: 49,
+    y: 64,
+  },
+  {
+    id: 'mount-sinai',
+    name: 'Mount Sinai Hospital',
+    type: 'Hospital',
+    distance: '2.7 km away',
+    address: '600 University Avenue, Toronto, ON',
+    phone: '(416) 596-4200',
+    x: 76,
+    y: 72,
+  },
+  {
+    id: 'downtown-clinic',
+    name: 'Downtown Community Clinic',
+    type: 'Community clinic',
+    distance: '3.9 km away',
+    address: '85 Dundas Street East, Toronto, ON',
+    phone: '(416) 555-0199',
+    x: 18,
+    y: 78,
+  },
+];
+
+let selectedFacilityId = getStored('careconnect-facility', 'st-michaels');
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function formatDate(dateString) {
+  return new Intl.DateTimeFormat('en-CA', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date(`${dateString}T12:00:00`));
+}
+
+function severityLabel(severity) {
+  return severity.charAt(0).toUpperCase() + severity.slice(1);
+}
+
+function severityBadge(severity) {
+  return `<span class="severity-badge severity-${severity}">${severityLabel(severity)}</span>`;
+}
+
 function renderAppointments() {
   const el = document.getElementById('appointments-list');
   if (!el) return;
+
   if (!DEMO_APPOINTMENTS.length) {
-    el.innerHTML = '<div class="list-item"><p>No upcoming appointments.</p></div>';
+    el.innerHTML = '<div class="empty-state"><p>No upcoming appointments.</p></div>';
     return;
   }
-  el.innerHTML = DEMO_APPOINTMENTS.map((a) => `
-    <div class="list-item">
+
+  el.innerHTML = DEMO_APPOINTMENTS
+    .map(
+      (appointment) => `
+        <article class="appointment-item">
+          <div class="appointment-date">
+            <span>${formatDate(appointment.date).split(' ')[0]}</span>
+            <strong>${formatDate(appointment.date).split(' ')[1].replace(',', '')}</strong>
+          </div>
+          <div class="appointment-details">
+            <p class="section-kicker">${escapeHtml(appointment.type)}</p>
+            <h3>${escapeHtml(appointment.provider)}</h3>
+            <p>${formatDate(appointment.date)} at ${escapeHtml(appointment.time)}</p>
+            <p class="appointment-reason">${escapeHtml(appointment.reason || 'Scheduled visit')}</p>
+          </div>
+          <div class="appointment-status">
+            ${severityBadge(appointment.severity || 'low')}
+            ${statusBadge('resolved', 'Scheduled')}
+          </div>
+        </article>
+      `,
+    )
+    .join('');
+}
+
+function symptomMarkup(symptom) {
+  const isResolved = symptom.status === 'resolved';
+  const status = isResolved ? statusBadge('resolved', 'Resolved') : statusBadge('open', 'Pending');
+  const dateText = isResolved
+    ? `Logged ${formatDate(symptom.date)} · Resolved ${formatDate(symptom.resolvedDate)}`
+    : `Logged ${formatDate(symptom.date)} · Active`;
+
+  return `
+    <article class="list-item symptom-item">
       <div>
-        <h4>${a.type} — ${a.provider}</h4>
-        <p>${a.date} at ${a.time}</p>
+        <h4>${escapeHtml(symptom.text)}</h4>
+        <p>${dateText} · ${severityLabel(symptom.severity)} severity</p>
       </div>
-      ${statusBadge('resolved', 'Scheduled')}
-    </div>
-  `).join('');
+      <div class="item-badges">
+        ${severityBadge(symptom.severity)}
+        ${status}
+      </div>
+    </article>
+  `;
 }
 
 function renderSymptoms() {
-  const el = document.getElementById('symptoms-list');
-  if (!el) return;
-  if (!DEMO_SYMPTOMS.length) {
-    el.innerHTML = '<div class="list-item"><p>No symptoms logged yet.</p></div>';
-    return;
+  const pending = DEMO_SYMPTOMS.filter((symptom) => symptom.status !== 'resolved');
+  const resolved = DEMO_SYMPTOMS.filter((symptom) => symptom.status === 'resolved');
+  const pendingEl = document.getElementById('pending-symptoms');
+  const resolvedEl = document.getElementById('resolved-symptoms');
+
+  if (pendingEl) {
+    pendingEl.innerHTML = pending.length
+      ? pending.map(symptomMarkup).join('')
+      : '<div class="empty-state"><p>No pending symptoms or issues.</p></div>';
   }
-  el.innerHTML = DEMO_SYMPTOMS.map((s) => `
-    <div class="list-item">
-      <div>
-        <h4>${s.text}</h4>
-        <p>Logged ${s.date} · Severity: ${s.severity}</p>
-      </div>
-      ${statusBadge('open', 'Tracking')}
-    </div>
-  `).join('');
+
+  if (resolvedEl) {
+    resolvedEl.innerHTML = resolved.length
+      ? resolved.map(symptomMarkup).join('')
+      : '<div class="empty-state"><p>No resolved symptoms or issues yet.</p></div>';
+  }
+
+  document.getElementById('pending-count').textContent = pending.length;
+  document.getElementById('resolved-count').textContent = resolved.length;
 }
 
 function renderMissed() {
   const el = document.getElementById('missed-list');
   if (!el) return;
+
   if (!DEMO_MISSED.length) {
-    el.innerHTML = '<div class="list-item"><p>No missed communications.</p></div>';
+    el.innerHTML = '<div class="empty-state"><p>No new care team messages.</p></div>';
     return;
   }
-  el.innerHTML = DEMO_MISSED.map((m) => `
-    <div class="list-item">
-      <div>
-        <h4>${m.subject}</h4>
-        <p>From ${m.from} · ${m.date} · ${m.channel}</p>
-      </div>
-      ${statusBadge('pending', 'Missed')}
-    </div>
-  `).join('');
+
+  el.innerHTML = DEMO_MISSED
+    .map(
+      (message) => `
+        <div class="list-item">
+          <div>
+            <h4>${escapeHtml(message.subject)}</h4>
+            <p>From ${escapeHtml(message.from)} · ${formatDate(message.date)} · ${escapeHtml(message.channel)}</p>
+          </div>
+          ${statusBadge('pending', 'New')}
+        </div>
+      `,
+    )
+    .join('');
 }
 
 function renderCases() {
   const el = document.getElementById('cases-list');
   if (!el) return;
+
   if (!DEMO_CASES.length) {
-    el.innerHTML = '<div class="list-item"><p>No pending cases.</p></div>';
+    el.innerHTML = '<div class="empty-state"><p>No pending cases.</p></div>';
     return;
   }
-  el.innerHTML = DEMO_CASES.map((c) => {
-    const badge = c.status === 'open' ? statusBadge('open', 'Open')
-      : c.status === 'pending' ? statusBadge('pending', 'Pending')
-      : statusBadge('resolved', 'Resolved');
-    return `
-      <div class="list-item">
-        <div>
-          <h4>${c.title}</h4>
-          <p>${c.note} · Updated ${c.updated}</p>
+
+  el.innerHTML = DEMO_CASES
+    .map((careCase) => {
+      const badge =
+        careCase.status === 'open'
+          ? statusBadge('open', 'Open')
+          : careCase.status === 'pending'
+            ? statusBadge('pending', 'Pending')
+            : statusBadge('resolved', 'Resolved');
+
+      return `
+        <div class="list-item">
+          <div>
+            <h4>${escapeHtml(careCase.title)}</h4>
+            <p>${escapeHtml(careCase.note)} · Updated ${formatDate(careCase.updated)}</p>
+          </div>
+          ${badge}
         </div>
-        ${badge}
-      </div>
-    `;
-  }).join('');
+      `;
+    })
+    .join('');
 }
 
 function renderMedications() {
   const el = document.getElementById('medications-list');
   if (!el) return;
-  el.innerHTML = DEMO_MEDICATIONS.map((m) => `
-    <div class="list-item">
-      <div>
-        <h4>${m.name}</h4>
-        <p>${m.dosage} · ${m.frequency}</p>
-      </div>
+
+  el.innerHTML = DEMO_MEDICATIONS
+    .map(
+      (medication) => `
+        <div class="list-item">
+          <div>
+            <h4>${escapeHtml(medication.name)}</h4>
+            <p>${escapeHtml(medication.dosage)} · ${escapeHtml(medication.frequency)}</p>
+          </div>
+        </div>
+      `,
+    )
+    .join('');
+}
+
+function renderEmergencyContacts() {
+  const el = document.getElementById('emergency-contacts');
+  if (!el) return;
+
+  el.innerHTML = EMERGENCY_CONTACTS
+    .map(
+      (contact) => `
+        <div class="contact-item">
+          <div>
+            <h4>${escapeHtml(contact.name)}</h4>
+            <p>${escapeHtml(contact.relationship)}</p>
+          </div>
+          <a href="tel:${contact.phone.replace(/\D/g, '')}">${escapeHtml(contact.phone)}</a>
+        </div>
+      `,
+    )
+    .join('');
+}
+
+function renderSelectedFacility() {
+  const facility = DEMO_FACILITIES.find((item) => item.id === selectedFacilityId) || DEMO_FACILITIES[0];
+  const el = document.getElementById('selected-facility');
+  const label = document.getElementById('selected-facility-label');
+  if (!el || !label) return;
+
+  label.textContent = facility.name;
+  el.innerHTML = `
+    <div>
+      <p class="section-kicker">Main care facility</p>
+      <h4>${escapeHtml(facility.name)}</h4>
+      <p>${escapeHtml(facility.address)} · ${escapeHtml(facility.distance)}</p>
     </div>
-  `).join('');
+    <a class="btn btn-sm" href="tel:${facility.phone.replace(/\D/g, '')}">Call facility</a>
+  `;
+}
+
+function renderFacilityMap() {
+  const el = document.getElementById('facility-map');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div class="map-road map-road-one"></div>
+    <div class="map-road map-road-two"></div>
+    <div class="map-road map-road-three"></div>
+    <div class="map-label map-label-north">Downtown Toronto</div>
+    <div class="map-label map-label-south">Lake Shore</div>
+    ${DEMO_FACILITIES.map(
+      (facility) => `
+        <button
+          type="button"
+          class="map-marker${facility.id === selectedFacilityId ? ' active' : ''}"
+          style="left:${facility.x}%;top:${facility.y}%"
+          data-facility-id="${facility.id}"
+          aria-label="Select ${escapeHtml(facility.name)}"
+          title="${escapeHtml(facility.name)}"
+        ></button>
+      `,
+    ).join('')}
+  `;
+}
+
+function renderFacilityList(filter = '') {
+  const el = document.getElementById('facility-list');
+  if (!el) return;
+
+  const query = filter.trim().toLowerCase();
+  const facilities = DEMO_FACILITIES.filter((facility) =>
+    `${facility.name} ${facility.type} ${facility.address}`.toLowerCase().includes(query),
+  );
+
+  el.innerHTML = facilities.length
+    ? facilities
+        .map(
+          (facility) => `
+            <button
+              type="button"
+              class="facility-item${facility.id === selectedFacilityId ? ' active' : ''}"
+              data-facility-id="${facility.id}"
+            >
+              <span class="facility-icon" aria-hidden="true">+</span>
+              <span class="facility-item-copy">
+                <strong>${escapeHtml(facility.name)}</strong>
+                <small>${escapeHtml(facility.type)} · ${escapeHtml(facility.distance)}</small>
+              </span>
+              <span aria-hidden="true">›</span>
+            </button>
+          `,
+        )
+        .join('')
+    : '<div class="empty-state"><p>No nearby facilities match your search.</p></div>';
+}
+
+function selectFacility(facilityId) {
+  if (!DEMO_FACILITIES.some((facility) => facility.id === facilityId)) return;
+  selectedFacilityId = facilityId;
+  setStored('careconnect-facility', facilityId);
+  renderSelectedFacility();
+  renderFacilityMap();
+  renderFacilityList(document.getElementById('facility-search')?.value || '');
+}
+
+function initFacilitySelector() {
+  if (!DEMO_FACILITIES.some((facility) => facility.id === selectedFacilityId)) {
+    selectedFacilityId = DEMO_FACILITIES[0].id;
+  }
+
+  renderSelectedFacility();
+  renderFacilityMap();
+  renderFacilityList();
+
+  document.getElementById('facility-search')?.addEventListener('input', (event) => {
+    renderFacilityList(event.target.value);
+  });
+
+  document.getElementById('facility-list')?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-facility-id]');
+    if (button) selectFacility(button.getAttribute('data-facility-id'));
+  });
+
+  document.getElementById('facility-map')?.addEventListener('click', (event) => {
+    const marker = event.target.closest('[data-facility-id]');
+    if (marker) selectFacility(marker.getAttribute('data-facility-id'));
+  });
+}
+
+function showPanel(panelId) {
+  document.querySelectorAll('.sidebar nav button[data-panel]').forEach((button) => {
+    button.classList.toggle('active', button.getAttribute('data-panel') === panelId);
+  });
+
+  document.querySelectorAll('.panel').forEach((panel) => {
+    panel.classList.toggle('active', panel.id === `panel-${panelId}`);
+  });
 }
 
 function initPanels() {
-  document.querySelectorAll('.sidebar nav button[data-panel]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const panelId = btn.getAttribute('data-panel');
-      document.querySelectorAll('.sidebar nav button').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
-      document.getElementById(`panel-${panelId}`)?.classList.add('active');
+  document.querySelectorAll('.sidebar nav button[data-panel]').forEach((button) => {
+    button.addEventListener('click', () => showPanel(button.getAttribute('data-panel')));
+  });
+
+  document.querySelectorAll('[data-jump-panel]').forEach((button) => {
+    button.addEventListener('click', () => showPanel(button.getAttribute('data-jump-panel')));
+  });
+}
+
+function initSymptomFilters() {
+  document.querySelectorAll('[data-symptom-filter]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const filter = button.getAttribute('data-symptom-filter');
+
+      document.querySelectorAll('[data-symptom-filter]').forEach((tab) => {
+        const active = tab === button;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+
+      document.querySelectorAll('.symptom-status-panel').forEach((panel) => {
+        panel.classList.toggle('active', panel.id === `symptom-status-${filter}`);
+      });
     });
   });
 }
 
 function initSymptomForm() {
-  document.getElementById('symptom-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
+  document.getElementById('symptom-form')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+
     const text = document.getElementById('symptom-input').value.trim();
     const severity = document.getElementById('symptom-severity').value;
     if (!text) return;
+
     DEMO_SYMPTOMS.unshift({
       text,
       severity,
       date: new Date().toISOString().slice(0, 10),
+      status: 'pending',
     });
-    document.getElementById('symptom-input').value = '';
+
+    event.target.reset();
     renderSymptoms();
+    document.querySelector('[data-symptom-filter="pending"]')?.click();
   });
 }
 
 function initAppointmentForm() {
-  document.getElementById('appointment-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const type = document.getElementById('appt-type');
+  document.getElementById('appointment-form')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+
     const date = document.getElementById('appt-date').value;
     const time = document.getElementById('appt-time').value;
+    const reason = document.getElementById('appt-reason').value.trim();
+    const severity = document.getElementById('appt-severity').value;
+    const type = document.getElementById('appt-type');
     const typeLabel = type.options[type.selectedIndex].text;
 
     DEMO_APPOINTMENTS.push({
       date,
       time,
-      provider: 'Dr. Sarah Chen',
+      reason,
+      severity,
+      provider: 'Care team at selected facility',
       type: typeLabel,
     });
     DEMO_APPOINTMENTS.sort((a, b) => a.date.localeCompare(b.date));
 
     renderAppointments();
-    e.target.reset();
+    event.target.reset();
     alert('Appointment request submitted. (Demo — no backend connected.)');
+    showPanel('overview');
   });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderCases();
-  renderMissed();
   renderAppointments();
+  renderEmergencyContacts();
+  renderFacilityList();
+  renderFacilityMap();
+  renderSelectedFacility();
+  renderMissed();
+  renderCases();
   renderMedications();
   renderSymptoms();
   initPanels();
+  initFacilitySelector();
+  initSymptomFilters();
   initSymptomForm();
   initAppointmentForm();
 });
