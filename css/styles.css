@@ -22,7 +22,7 @@
   --success: #1e8449;
   --focus-ring: 0 0 0 3px rgba(0, 102, 161, 0.35);
 
-  /* Status indicator colors (also have texture variants) */
+  /* Status indicator colors */
   --status-open: #0066a1;
   --status-pending: #d68910;
   --status-resolved: #1e8449;
@@ -49,12 +49,6 @@
   --status-resolved: #58d68d;
 }
 
-[data-colorblind="true"] {
-  --status-open: #0072b2;
-  --status-pending: #e69f00;
-  --status-resolved: #009e73;
-}
-
 *,
 *::before,
 *::after {
@@ -73,17 +67,6 @@ body {
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
-}
-
-body.sideways-mode {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-}
-
-body.sideways-mode .container,
-body.sideways-mode .dashboard-layout {
-  writing-mode: horizontal-tb;
-  text-orientation: mixed;
 }
 
 img {
@@ -356,7 +339,7 @@ a:hover {
   margin-bottom: 0.85rem;
 }
 
-/* ---------- Status textures (colorblind support) ---------- */
+/* ---------- Status badges ---------- */
 
 .status-badge {
   display: inline-flex;
@@ -369,27 +352,10 @@ a:hover {
   border: 1px solid transparent;
 }
 
-.status-badge .texture {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
 .status-open {
   background: color-mix(in srgb, var(--status-open) 15%, transparent);
   color: var(--status-open);
   border-color: color-mix(in srgb, var(--status-open) 30%, transparent);
-}
-
-.status-open .texture {
-  background: repeating-linear-gradient(
-    45deg,
-    var(--status-open),
-    var(--status-open) 2px,
-    transparent 2px,
-    transparent 4px
-  );
 }
 
 .status-pending {
@@ -398,27 +364,10 @@ a:hover {
   border-color: color-mix(in srgb, var(--status-pending) 30%, transparent);
 }
 
-.status-pending .texture {
-  background: radial-gradient(circle, var(--status-pending) 1.5px, transparent 1.5px);
-  background-size: 4px 4px;
-}
-
 .status-resolved {
   background: color-mix(in srgb, var(--status-resolved) 15%, transparent);
   color: var(--status-resolved);
   border-color: color-mix(in srgb, var(--status-resolved) 30%, transparent);
-}
-
-.status-resolved .texture {
-  background: linear-gradient(0deg, var(--status-resolved) 33%, transparent 33%, transparent 66%, var(--status-resolved) 66%);
-}
-
-[data-colorblind="false"] .status-badge .texture {
-  display: none;
-}
-
-[data-colorblind="true"] .status-badge .texture {
-  display: block;
 }
 
 /* ---------- Login modal ---------- */
@@ -692,12 +641,6 @@ tr:last-child td {
   gap: 0.5rem;
   align-items: center;
   margin-top: 0.5rem;
-}
-
-.speech-controls .listening {
-  color: var(--accent);
-  font-size: 0.85rem;
-  font-weight: 500;
 }
 
 /* ---------- Contact / communication ---------- */

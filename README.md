@@ -27,15 +27,13 @@ Then visit `http://localhost:3000`.
 
 ### Accessibility (all pages)
 - **Light / Dark mode**
-- **Colorblind textures** on status badges
-- **Sideways mode**
-- **Text-to-speech** and **Speech-to-text** (browser-dependent)
+- **Text-to-speech** (browser-dependent)
 
 ### Patient Portal
 - Future appointments (sample data; full calendar is roadmap Step 2)
-- Symptom tracking with speech-to-text
+- Symptom tracking with manual text entry
 - Missed communications log
-- Unresolved cases with textured status indicators
+- Unresolved cases with clear status indicators
 - Contact care team (message + callback request)
 
 ### Provider Portal
