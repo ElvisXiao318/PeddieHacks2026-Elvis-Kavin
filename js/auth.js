@@ -46,6 +46,8 @@ function handleLogin(event) {
 
   if (role === 'patient') {
     window.location.href = 'patient.html';
+  } else if (role === 'admin') {
+    window.location.href = 'admin.html';
   } else {
     window.location.href = 'provider.html';
   }

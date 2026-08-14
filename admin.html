@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en-CA" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Admin — CareConnect</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon" aria-hidden="true">+</span>
+        CareConnect
+      </a>
+      <span style="color:var(--text-muted);font-size:0.9rem;">Hospital Admin Portal</span>
+      <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button type="button" id="theme-toggle" class="btn btn-sm" aria-pressed="false">🌙 Dark</button>
+        <button type="button" id="logout-btn" class="btn btn-sm">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container dashboard-layout">
+    <aside class="sidebar">
+      <nav aria-label="Admin navigation">
+        <button type="button" class="active" data-panel="schedule">Schedule</button>
+        <button type="button" data-panel="book">Book an Appointment</button>
+        <button type="button" data-panel="clients">Clients</button>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <div class="dashboard-heading">
+        <div>
+          <p class="section-kicker">Hospital admin</p>
+          <h1 class="page-title" id="admin-hospital-name">St. Michael's Hospital</h1>
+          <p class="page-subtitle">Manage hospital-wide schedules, appointments, and patient records.</p>
+        </div>
+        <span class="secure-badge">Secure admin view</span>
+      </div>
+
+      <!-- Schedule -->
+      <section id="panel-schedule" class="panel active">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Appointments</p>
+            <h2>Schedule of appointments</h2>
+            <p class="card-description">View visits by individual doctor or across the entire hospital.</p>
+          </div>
+        </div>
+
+        <div class="status-tabs" role="tablist" aria-label="Schedule view">
+          <button type="button" class="status-tab active" role="tab" aria-selected="true" data-schedule-view="doctor">
+            Per doctor
+          </button>
+          <button type="button" class="status-tab" role="tab" aria-selected="false" data-schedule-view="hospital">
+            Entire hospital
+          </button>
+        </div>
+
+        <div class="schedule-view-panel active" id="schedule-view-doctor">
+          <div class="card schedule-filter-card">
+            <div class="form-group schedule-doctor-filter">
+              <label for="schedule-doctor-select">Select doctor</label>
+              <select id="schedule-doctor-select"></select>
+            </div>
+          </div>
+          <div class="list-card appointment-list" id="doctor-schedule-list" aria-label="Doctor appointment schedule"></div>
+        </div>
+
+        <div class="schedule-view-panel" id="schedule-view-hospital">
+          <div class="list-card appointment-list" id="hospital-schedule-list" aria-label="Hospital-wide appointment schedule"></div>
+        </div>
+      </section>
+
+      <!-- Book an Appointment -->
+      <section id="panel-book" class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Scheduling</p>
+            <h2>Book an appointment</h2>
+            <p class="card-description">Schedule a client with a doctor at this hospital.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <form id="admin-booking-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="admin-booking-patient">Client</label>
+                <select id="admin-booking-patient" required></select>
+              </div>
+              <div class="form-group">
+                <label for="admin-booking-doctor">Doctor at this hospital</label>
+                <select id="admin-booking-doctor" required></select>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="admin-booking-date">Preferred date</label>
+                <input type="date" id="admin-booking-date" required>
+              </div>
+              <div class="form-group">
+                <label for="admin-booking-time">Preferred time</label>
+                <select id="admin-booking-time" required>
+                  <option value="">Select time…</option>
+                  <option value="09:00 AM">09:00 AM</option>
+                  <option value="10:30 AM">10:30 AM</option>
+                  <option value="02:00 PM">02:00 PM</option>
+                  <option value="03:30 PM">03:30 PM</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="admin-booking-type">Appointment type</label>
+              <select id="admin-booking-type" required>
+                <option value="">Select type…</option>
+                <option value="Follow-up">Follow-up</option>
+                <option value="Consultation">Consultation</option>
+                <option value="Lab review">Lab review</option>
+                <option value="Urgent visit">Urgent visit</option>
+                <option value="General visit">General visit</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="admin-booking-reason">Reason for visit</label>
+              <textarea id="admin-booking-reason" placeholder="Clinical reason or notes…" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Book appointment</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Clients -->
+      <section id="panel-clients" class="panel">
+        <div id="admin-client-list-view">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Patient roster</p>
+              <h2>Clients at this hospital</h2>
+              <p class="card-description">Every client registered at your hospital. Select one to view their full record.</p>
+            </div>
+            <label class="sr-only" for="admin-client-search">Search clients</label>
+            <input type="search" id="admin-client-search" class="client-search" placeholder="Search clients…" autocomplete="off">
+          </div>
+          <div class="list-card client-list" id="admin-client-list" aria-label="Hospital client list"></div>
+        </div>
+
+        <div id="admin-client-detail-view" class="client-detail-view" hidden>
+          <button type="button" class="btn btn-sm back-btn" id="admin-back-to-clients">← Back to clients</button>
+
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Client record</p>
+              <h2 id="admin-client-detail-name">Client name</h2>
+              <p class="card-description" id="admin-client-detail-summary"></p>
+            </div>
+            <button type="button" class="btn btn-sm" data-tts="admin-client-profile">🔊 Read Aloud</button>
+          </div>
+
+          <div class="overview-grid">
+            <section class="card">
+              <div class="card-heading">
+                <div>
+                  <p class="section-kicker">Demographics</p>
+                  <h3>Personal information</h3>
+                </div>
+              </div>
+              <dl class="health-info profile-info" id="admin-client-profile"></dl>
+            </section>
+
+            <section class="card">
+              <div class="card-heading">
+                <div>
+                  <p class="section-kicker">People to call</p>
+                  <h3>Emergency contacts</h3>
+                </div>
+              </div>
+              <div class="contact-list" id="admin-client-contacts" aria-label="Emergency contacts"></div>
+            </section>
+          </div>
+
+          <section class="card facility-card">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">Care coordination</p>
+                <h3>Main care facility</h3>
+                <p class="card-description">Hospital or clinic where this client receives primary care.</p>
+              </div>
+              <span class="facility-selected-label" id="admin-client-facility-label">Selected facility</span>
+            </div>
+
+            <div class="facility-layout">
+              <div>
+                <div class="facility-map" id="admin-client-facility-map" aria-label="Map of healthcare facilities"></div>
+                <div class="selected-facility" id="admin-client-selected-facility" aria-live="polite"></div>
+              </div>
+              <div class="facility-directory">
+                <label for="admin-client-facility-search">All hospitals and clinics</label>
+                <input type="search" id="admin-client-facility-search" placeholder="Search facilities…" autocomplete="off">
+                <div class="facility-list" id="admin-client-facility-list" aria-label="Healthcare facilities"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">Medical history</p>
+                <h3>All issues recorded to date</h3>
+                <p class="card-description">Complete symptom and care history for this patient.</p>
+              </div>
+            </div>
+            <div class="list-card" id="admin-client-history" aria-label="Patient issue history"></div>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

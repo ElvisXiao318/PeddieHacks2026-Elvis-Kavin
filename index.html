@@ -45,7 +45,7 @@
         </div>
         <div class="card" style="max-width:640px;margin:0 auto;">
           <p style="margin:0 0 0.75rem;color:var(--text-muted);">CareConnect helps reduce communication barriers between doctors and patients. Critical information stays organized and accessible, tailored to each hospital, so care teams can make quicker, more accurate decisions.</p>
-          <p style="margin:0;color:var(--text-muted);">Sign in as a patient or healthcare provider to access your dashboard.</p>
+          <p style="margin:0;color:var(--text-muted);">Sign in as a patient, healthcare provider, or hospital admin to access your dashboard.</p>
         </div>
       </div>
     </section>
@@ -76,7 +76,8 @@
           <select id="login-role" name="role" required>
             <option value="">Select role…</option>
             <option value="patient">Patient</option>
-            <option value="provider">Healthcare Provider</option>
+            <option value="provider">Healthcare Provider (Doctor)</option>
+            <option value="admin">Hospital Admin</option>
           </select>
         </div>
         <p class="error-msg" id="login-error" role="alert"></p>

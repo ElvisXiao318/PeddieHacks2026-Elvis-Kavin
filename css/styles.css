@@ -1491,6 +1491,24 @@ tr:last-child td {
   font-size: 0.82rem;
 }
 
+.schedule-view-panel {
+  display: none;
+}
+
+.schedule-view-panel.active {
+  display: block;
+}
+
+.schedule-filter-card {
+  margin-bottom: 1rem;
+  padding: 1rem 1.15rem;
+}
+
+.schedule-doctor-filter {
+  margin: 0;
+  max-width: 420px;
+}
+
 /* ---------- Demo notice ---------- */
 
 .demo-notice {
