@@ -1,5 +1,5 @@
 /**
- * CareConnect — Shared demo data
+ * CarePath — Shared demo data
  */
 
 const DEMO_FACILITIES = [
@@ -387,7 +387,7 @@ function issueStatusBadge(status) {
 }
 
 /* Real accounts replace all clinical demo records. Empty data stays empty until it is created. */
-const CARECONNECT_DATA_READY = fetch('/api/dashboard-data')
+const CAREPATH_DATA_READY = fetch('/api/dashboard-data')
   .then((response) => response.ok ? response.json() : Promise.reject())
   .then((data) => {
     DEMO_PATIENTS.splice(0, DEMO_PATIENTS.length, ...data.patients);
@@ -395,6 +395,15 @@ const CARECONNECT_DATA_READY = fetch('/api/dashboard-data')
     DEMO_SPECIALISTS.splice(0, DEMO_SPECIALISTS.length, ...data.specialists);
     HOSPITAL_SCHEDULE.splice(0);
     PROVIDER_SCHEDULE.splice(0);
+    const token = getStored(STORAGE_KEYS.sessionToken, '');
+    if (token && ['admin', 'provider'].includes(getStored(STORAGE_KEYS.role, ''))) {
+      return fetch('/api/appointments', { headers: { Authorization: `Bearer ${token}` } })
+        .then((response) => response.ok ? response.json() : [])
+        .then((appointments) => {
+          HOSPITAL_SCHEDULE.push(...appointments);
+          PROVIDER_SCHEDULE.push(...appointments);
+        });
+    }
   })
   .catch(() => {
     DEMO_PATIENTS.splice(0);

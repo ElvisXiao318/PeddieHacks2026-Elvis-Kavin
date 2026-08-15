@@ -1,5 +1,5 @@
 /**
- * CareConnect — Patient dashboard
+ * CarePath — Patient dashboard
  */
 
 requireAuth('patient');
@@ -8,7 +8,7 @@ async function hydratePatientProfile() {
   const patientId = getStored(STORAGE_KEYS.userId, '');
   if (!patientId) return;
   try {
-    const response = await fetch(`/api/patients/${encodeURIComponent(patientId)}`);
+    const response = await fetch(`/api/patients/${encodeURIComponent(patientId)}`, { headers: { Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` } });
     if (!response.ok) return;
     const patient = await response.json();
     const birthday = new Date(`${patient.date_of_birth}T12:00:00`);
@@ -18,8 +18,30 @@ async function hydratePatientProfile() {
     document.getElementById('patient-gender').textContent = patient.gender;
     document.getElementById('patient-health-card').textContent = patient.health_card_number;
     EMERGENCY_CONTACTS.splice(0, EMERGENCY_CONTACTS.length, ...patient.emergency_contacts);
+    DEMO_SYMPTOMS.splice(0, DEMO_SYMPTOMS.length, ...patient.symptoms);
+    DEMO_MISSED.splice(0, DEMO_MISSED.length, ...patient.messages);
+    DEMO_CASES.splice(0, DEMO_CASES.length, ...patient.cases);
+    DEMO_MEDICATIONS.splice(0, DEMO_MEDICATIONS.length, ...patient.medications);
     renderEmergencyContacts();
+    renderSymptoms(); renderMissed(); renderCases(); renderMedications();
   } catch { /* The dashboard retains its illustrative values if the API is unavailable. */ }
+}
+
+async function loadAppointments() {
+  const patientId = getStored(STORAGE_KEYS.userId, '');
+  const token = getStored(STORAGE_KEYS.sessionToken, '');
+  if (!patientId || !token) return;
+  try {
+    const response = await fetch(`/api/patients/${encodeURIComponent(patientId)}/appointments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Appointments unavailable.');
+    const appointments = await response.json();
+    DEMO_APPOINTMENTS.splice(0, DEMO_APPOINTMENTS.length, ...appointments);
+    renderAppointments();
+  } catch {
+    /* The list remains empty when the server cannot be reached. */
+  }
 }
 
 const DEMO_APPOINTMENTS = [
@@ -145,7 +167,7 @@ const DEMO_FACILITIES = [
   },
 ];
 
-let selectedFacilityId = getStored('careconnect-facility', 'st-michaels');
+let selectedFacilityId = getStored('carepath-facility', 'st-michaels');
 let mapScale = 1;
 let mapOffset = { x: 0, y: 0 };
 let mapDragState = null;
@@ -200,7 +222,7 @@ function renderAppointments() {
           </div>
           <div class="appointment-status">
             ${severityBadge(appointment.severity || 'low')}
-            ${statusBadge('resolved', 'Scheduled')}
+            ${appointment.status === 'requested' ? statusBadge('pending', 'Requested') : statusBadge('resolved', 'Scheduled')}
           </div>
         </article>
       `,
@@ -543,7 +565,7 @@ function renderFacilityList(filter = '') {
 function selectFacility(facilityId) {
   if (!DEMO_FACILITIES.some((facility) => facility.id === facilityId)) return;
   selectedFacilityId = facilityId;
-  setStored('careconnect-facility', facilityId);
+  setStored('carepath-facility', facilityId);
   renderSelectedFacility();
   renderFacilityMap();
   renderFacilityList(document.getElementById('facility-search')?.value || '');
@@ -615,28 +637,26 @@ function initSymptomFilters() {
 }
 
 function initSymptomForm() {
-  document.getElementById('symptom-form')?.addEventListener('submit', (event) => {
+  document.getElementById('symptom-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const text = document.getElementById('symptom-input').value.trim();
     const severity = document.getElementById('symptom-severity').value;
     if (!text) return;
 
-    DEMO_SYMPTOMS.unshift({
-      text,
-      severity,
-      date: new Date().toISOString().slice(0, 10),
-      status: 'pending',
-    });
-
-    event.target.reset();
-    renderSymptoms();
-    document.querySelector('[data-symptom-filter="pending"]')?.click();
+    try {
+      const response = await fetch('/api/symptoms', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` }, body: JSON.stringify({ patientId: getStored(STORAGE_KEYS.userId, ''), text, severity }) });
+      const symptom = await response.json();
+      if (!response.ok) throw new Error(symptom.error || 'Unable to save symptom.');
+      DEMO_SYMPTOMS.unshift(symptom);
+      event.target.reset(); renderSymptoms();
+      document.querySelector('[data-symptom-filter="pending"]')?.click();
+    } catch (error) { alert(error.message); }
   });
 }
 
 function initAppointmentForm() {
-  document.getElementById('appointment-form')?.addEventListener('submit', (event) => {
+  document.getElementById('appointment-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const date = document.getElementById('appt-date').value;
@@ -646,31 +666,43 @@ function initAppointmentForm() {
     const type = document.getElementById('appt-type');
     const typeLabel = type.options[type.selectedIndex].text;
 
-    DEMO_APPOINTMENTS.push({
-      date,
-      time,
-      reason,
-      severity,
-      provider: 'Care team at selected facility',
-      type: typeLabel,
-    });
-    DEMO_APPOINTMENTS.sort((a, b) => a.date.localeCompare(b.date));
-
-    renderAppointments();
-    event.target.reset();
-    alert('Appointment request submitted. (Demo — no backend connected.)');
-    showPanel('overview');
+    try {
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}`,
+        },
+        body: JSON.stringify({
+          patientId: getStored(STORAGE_KEYS.userId, ''),
+          date,
+          time,
+          reason,
+          severity,
+          type: typeLabel,
+        }),
+      });
+      const appointment = await response.json();
+      if (!response.ok) throw new Error(appointment.error || 'Unable to submit the appointment request.');
+      DEMO_APPOINTMENTS.push(appointment);
+      DEMO_APPOINTMENTS.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+      renderAppointments();
+      event.target.reset();
+      alert('Appointment request submitted successfully.');
+      showPanel('overview');
+    } catch (error) {
+      alert(error.message);
+    }
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   DEMO_APPOINTMENTS.splice(0);
   DEMO_SYMPTOMS.splice(0);
   DEMO_MISSED.splice(0);
   DEMO_CASES.splice(0);
   DEMO_MEDICATIONS.splice(0);
   EMERGENCY_CONTACTS.splice(0);
-  hydratePatientProfile();
   renderAppointments();
   renderEmergencyContacts();
   renderFacilityList();
@@ -685,4 +717,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initSymptomFilters();
   initSymptomForm();
   initAppointmentForm();
+  await Promise.all([hydratePatientProfile(), loadAppointments()]);
 });

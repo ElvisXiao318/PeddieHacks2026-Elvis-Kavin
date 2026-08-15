@@ -56,3 +56,38 @@ CREATE TABLE IF NOT EXISTS emergency_contacts (
   relationship TEXT NOT NULL,
   phone TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS appointments (
+  appointment_id TEXT PRIMARY KEY,
+  patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+  doctor_id TEXT NOT NULL REFERENCES doctors(doctor_id),
+  hospital_id TEXT NOT NULL REFERENCES hospitals(hospital_id),
+  appointment_date TEXT NOT NULL,
+  appointment_time TEXT NOT NULL,
+  appointment_type TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high')),
+  status TEXT NOT NULL DEFAULT 'requested',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS symptoms (
+  symptom_id TEXT PRIMARY KEY, patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+  symptom_text TEXT NOT NULL, severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high')),
+  status TEXT NOT NULL DEFAULT 'pending', logged_date TEXT NOT NULL, resolved_date TEXT
+);
+
+CREATE TABLE IF NOT EXISTS care_messages (
+  message_id TEXT PRIMARY KEY, patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+  sender TEXT NOT NULL, subject TEXT NOT NULL, channel TEXT NOT NULL, message_date TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS care_cases (
+  case_id TEXT PRIMARY KEY, patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+  title TEXT NOT NULL, status TEXT NOT NULL, updated_date TEXT NOT NULL, note TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS medications (
+  medication_id TEXT PRIMARY KEY, patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+  medication_name TEXT NOT NULL, dosage TEXT NOT NULL, frequency TEXT NOT NULL
+);

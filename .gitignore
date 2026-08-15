@@ -1,2 +1,4 @@
-careconnect.db
+carepath.db
+.build/
+.build-tools/
 __pycache__/
