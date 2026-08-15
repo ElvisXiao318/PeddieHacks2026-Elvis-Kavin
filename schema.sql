@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS patients (
   gender TEXT NOT NULL,
   health_card_number TEXT NOT NULL UNIQUE,
   phone TEXT,
+  blood_type TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

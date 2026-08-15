@@ -345,11 +345,23 @@ function escapeHtml(value) {
 }
 
 function formatDate(dateString) {
+  const parsed = new Date(`${dateString}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return 'Not on record';
   return new Intl.DateTimeFormat('en-CA', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date(`${dateString}T12:00:00`));
+  }).format(parsed);
+}
+
+/** Month and day of an ISO date, e.g. { month: 'Aug', day: '18' }. */
+function dateParts(dateString) {
+  const parsed = new Date(`${dateString}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return { month: '—', day: '—' };
+  return {
+    month: new Intl.DateTimeFormat('en-CA', { month: 'short' }).format(parsed),
+    day: new Intl.DateTimeFormat('en-CA', { day: 'numeric' }).format(parsed),
+  };
 }
 
 function severityLabel(severity) {
@@ -361,7 +373,29 @@ function severityBadge(severity) {
 }
 
 function getFacility(facilityId) {
-  return DEMO_FACILITIES.find((f) => f.id === facilityId) || DEMO_FACILITIES[0];
+  return (
+    DEMO_FACILITIES.find((f) => f.id === facilityId) || {
+      id: facilityId || 'unknown',
+      name: 'Facility not on record',
+      type: 'Facility',
+      distance: 'Distance unavailable',
+      address: 'Address unavailable',
+      phone: '',
+    }
+  );
+}
+
+/** A doctor or specialist account by id. */
+function getProvider(providerId) {
+  return (
+    HOSPITAL_DOCTORS.find((doctor) => doctor.id === providerId) ||
+    DEMO_SPECIALISTS.find((specialist) => specialist.id === providerId) ||
+    null
+  );
+}
+
+function getDoctorPatients(doctorId) {
+  return DEMO_PATIENTS.filter((patient) => patient.primaryDoctorId === doctorId);
 }
 
 function getPatient(patientId) {
@@ -393,6 +427,17 @@ const CAREPATH_DATA_READY = fetch('/api/dashboard-data')
     DEMO_PATIENTS.splice(0, DEMO_PATIENTS.length, ...data.patients);
     HOSPITAL_DOCTORS.splice(0, HOSPITAL_DOCTORS.length, ...data.doctors);
     DEMO_SPECIALISTS.splice(0, DEMO_SPECIALISTS.length, ...data.specialists);
+    (data.hospitals || []).forEach((hospital) => {
+      if (DEMO_FACILITIES.some((facility) => facility.id === hospital.id)) return;
+      DEMO_FACILITIES.push({
+        id: hospital.id,
+        name: hospital.name,
+        type: 'Hospital',
+        distance: 'Distance unavailable',
+        address: hospital.address || 'Address unavailable',
+        phone: hospital.phone || '',
+      });
+    });
     HOSPITAL_SCHEDULE.splice(0);
     PROVIDER_SCHEDULE.splice(0);
     const token = getStored(STORAGE_KEYS.sessionToken, '');
@@ -445,98 +490,5 @@ DEMO_FACILITIES.push(
     phone: '(905) 522-1155',
     x: 68,
     y: 62,
-  },
-);
-
-HOSPITAL_DOCTORS.push(
-  { id: 'doc-hamilton-kim',    name: 'Dr. Daniel Kim',       specialty: 'Emergency medicine', facilityId: 'hamilton-general',   phone: '(905) 527-4322' },
-  { id: 'doc-hamilton-flores', name: 'Dr. Maria Flores',     specialty: 'Internal medicine',  facilityId: 'juravinski',         phone: '(905) 521-2100' },
-  { id: 'doc-hamilton-ali',    name: 'Dr. Yasmine Ali',      specialty: 'Family medicine',    facilityId: 'st-josephs-hamilton', phone: '(905) 522-1155' },
-);
-
-DEMO_PATIENTS.push(
-  {
-    id: 'carl-hutchinson',
-    name: 'Carl Hutchinson',
-    bloodType: 'A negative',
-    age: 58,
-    sex: 'Male',
-    healthCard: '****-****-2291',
-    facilityId: 'hamilton-general',
-    primaryDoctorId: 'doc-hamilton-kim',
-    lastVisit: '2026-08-10',
-    emergencyContacts: [
-      { name: 'Sandra Hutchinson', relationship: 'Spouse', phone: '(905) 555-0141' },
-      { name: 'Emergency services', relationship: 'Immediate danger', phone: '911' },
-    ],
-    issues: [
-      { type: 'symptom', text: 'Shortness of breath on exertion', severity: 'high',   date: '2026-08-09', status: 'pending' },
-      { type: 'case',    text: 'Cardiac stress test pending',     severity: 'high',   date: '2026-08-10', status: 'open',   note: 'Scheduled for August 20.' },
-      { type: 'symptom', text: 'Mild ankle swelling',             severity: 'medium', date: '2026-07-30', status: 'pending' },
-      { type: 'symptom', text: 'Fatigue after physical activity', severity: 'low',    date: '2026-06-14', status: 'resolved', resolvedDate: '2026-07-01' },
-    ],
-  },
-  {
-    id: 'nadia-ross',
-    name: 'Nadia Ross',
-    bloodType: 'O positive',
-    age: 34,
-    sex: 'Female',
-    healthCard: '****-****-8847',
-    facilityId: 'juravinski',
-    primaryDoctorId: 'doc-hamilton-flores',
-    lastVisit: '2026-08-07',
-    emergencyContacts: [
-      { name: 'Kevin Ross', relationship: 'Husband', phone: '(905) 555-0162' },
-      { name: 'Emergency services', relationship: 'Immediate danger', phone: '911' },
-    ],
-    issues: [
-      { type: 'symptom', text: 'Persistent headaches',           severity: 'medium', date: '2026-08-05', status: 'pending' },
-      { type: 'case',    text: 'MRI referral submitted',         severity: 'medium', date: '2026-08-07', status: 'open',   note: 'Awaiting radiology booking.' },
-      { type: 'symptom', text: 'Nausea with headaches',          severity: 'low',    date: '2026-07-28', status: 'pending' },
-      { type: 'symptom', text: 'Eye strain from screen use',     severity: 'low',    date: '2026-05-20', status: 'resolved', resolvedDate: '2026-06-03' },
-    ],
-  },
-);
-
-HOSPITAL_SCHEDULE.push(
-  {
-    date: '2026-08-20',
-    time: '09:00 AM',
-    patientId: 'carl-hutchinson',
-    patientName: 'Carl Hutchinson',
-    doctorId: 'doc-hamilton-kim',
-    doctorName: 'Dr. Daniel Kim',
-    specialty: 'Emergency medicine',
-    facilityId: 'hamilton-general',
-    type: 'Consultation',
-    reason: 'Cardiac stress test pre-assessment',
-    severity: 'high',
-  },
-  {
-    date: '2026-08-21',
-    time: '10:30 AM',
-    patientId: 'nadia-ross',
-    patientName: 'Nadia Ross',
-    doctorId: 'doc-hamilton-flores',
-    doctorName: 'Dr. Maria Flores',
-    specialty: 'Internal medicine',
-    facilityId: 'juravinski',
-    type: 'Follow-up',
-    reason: 'Review headache symptoms',
-    severity: 'medium',
-  },
-  {
-    date: '2026-08-25',
-    time: '02:00 PM',
-    patientId: 'carl-hutchinson',
-    patientName: 'Carl Hutchinson',
-    doctorId: 'doc-hamilton-kim',
-    doctorName: 'Dr. Daniel Kim',
-    specialty: 'Emergency medicine',
-    facilityId: 'hamilton-general',
-    type: 'Lab review',
-    reason: 'Cardiac stress test results',
-    severity: 'high',
   },
 );

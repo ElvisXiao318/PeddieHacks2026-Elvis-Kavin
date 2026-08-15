@@ -6,7 +6,7 @@ import secrets
 import sqlite3
 import sys
 import uuid
-from datetime import date
+from datetime import date, timedelta
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -45,15 +45,121 @@ def hospital_directory_rows():
 def hash_password(password):
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
+# Simulated roster used to fill each doctor's client list.
+# (name, date of birth, gender, blood type, emergency contact, relationship, [(symptom, severity), ...])
+SIMULATED_PATIENT_POOL = [
+    ("Alice Marchetti", "1974-02-11", "Female", "A positive", "Dino Marchetti", "Spouse",
+     [("Persistent dry cough", "medium"), ("Chest congestion", "low")]),
+    ("Bruno Castellano", "1961-09-04", "Male", "O positive", "Lucia Castellano", "Daughter",
+     [("Shortness of breath climbing stairs", "high"), ("Swelling in both ankles", "medium")]),
+    ("Chantal Beaulieu", "1988-05-27", "Female", "B negative", "Marc Beaulieu", "Husband",
+     [("Migraine with light sensitivity", "medium"), ("Neck stiffness", "low")]),
+    ("Devon Whitaker", "1996-12-02", "Male", "AB positive", "Karen Whitaker", "Mother",
+     [("Sports injury to right knee", "medium"), ("Difficulty bearing weight", "medium")]),
+    ("Esther Nwosu", "1953-07-19", "Female", "O negative", "Chidi Nwosu", "Son",
+     [("Elevated blood pressure readings", "high"), ("Occasional dizziness", "medium")]),
+    ("Felix Dominguez", "1980-03-30", "Male", "A negative", "Rosa Dominguez", "Sister",
+     [("Upper abdominal pain after meals", "medium"), ("Heartburn at night", "low")]),
+    ("Grace Sandhu", "1969-11-08", "Female", "B positive", "Amrit Sandhu", "Spouse",
+     [("Type 2 diabetes review", "medium"), ("Numbness in fingertips", "medium")]),
+    ("Hugo Lemieux", "2001-01-23", "Male", "O positive", "Josée Lemieux", "Mother",
+     [("Seasonal asthma flare-up", "medium"), ("Wheezing overnight", "low")]),
+    ("Imani Clarke", "1992-04-14", "Female", "A positive", "Denise Clarke", "Sister",
+     [("Iron deficiency fatigue", "medium"), ("Shortness of breath on exertion", "low")]),
+    ("Jasper Holloway", "1947-08-05", "Male", "AB negative", "Ruth Holloway", "Daughter",
+     [("Memory lapses reported by family", "medium"), ("Unsteady balance", "high")]),
+    ("Katrina Popov", "1985-06-21", "Female", "O positive", "Ivan Popov", "Brother",
+     [("Thyroid medication review", "low"), ("Weight change over 3 months", "medium")]),
+    ("Liam Gallagher", "1978-10-12", "Male", "B positive", "Erin Gallagher", "Spouse",
+     [("Lower back pain radiating to leg", "medium"), ("Reduced mobility in the morning", "low")]),
+    ("Mireille Fontaine", "1964-02-28", "Female", "A negative", "Paul Fontaine", "Husband",
+     [("Rheumatoid joint swelling", "medium"), ("Morning stiffness over an hour", "medium")]),
+    ("Nikhil Verma", "1990-09-16", "Male", "O negative", "Anita Verma", "Mother",
+     [("Recurrent tonsillitis", "medium"), ("Difficulty swallowing", "low")]),
+    ("Olivia Trepanier", "1958-05-09", "Female", "B negative", "Simon Trepanier", "Son",
+     [("Post-surgical wound check", "medium"), ("Low-grade fever", "high")]),
+    ("Peter Achebe", "1971-12-25", "Male", "A positive", "Ngozi Achebe", "Spouse",
+     [("Kidney stone follow-up", "high"), ("Flank pain", "medium")]),
+    ("Quinn Delacroix", "1999-03-07", "Female", "AB positive", "Marie Delacroix", "Mother",
+     [("Anxiety with panic episodes", "medium"), ("Insomnia", "low")]),
+    ("Rashid Karim", "1966-07-31", "Male", "O positive", "Layla Karim", "Daughter",
+     [("Chest tightness during exercise", "high"), ("High cholesterol review", "medium")]),
+    ("Simone Boucher", "1983-11-18", "Female", "A negative", "Éric Boucher", "Husband",
+     [("Chronic sinus congestion", "low"), ("Headaches behind the eyes", "medium")]),
+    ("Tobias Lindgren", "1955-04-02", "Male", "B positive", "Ingrid Lindgren", "Spouse",
+     [("COPD exacerbation", "high"), ("Persistent morning cough", "medium")]),
+]
+
+APPOINTMENT_TIMES = ["09:00 AM", "10:30 AM", "11:15 AM", "01:45 PM", "03:30 PM"]
+APPOINTMENT_TYPES = ["Follow-up", "Consultation", "Lab review", "Check-up", "Urgent visit"]
+
+def seed_simulated_patients(connection, hospital_id, password_hash, per_doctor=5):
+    """Top every doctor at a hospital up to a roster of simulated patients, symptoms, and visits."""
+    doctors = connection.execute(
+        "SELECT doctor_id FROM doctors WHERE hospital_id = ? ORDER BY doctor_id", (hospital_id,)).fetchall()
+    today = date.today()
+    for doctor_index, doctor in enumerate(doctors):
+        assigned = connection.execute(
+            "SELECT COUNT(*) AS total FROM patients WHERE doctor_id = ?", (doctor["doctor_id"],)).fetchone()["total"]
+        for patient_index in range(max(0, per_doctor - assigned)):
+            offset = doctor_index * per_doctor + patient_index
+            name, dob, gender, blood_type, contact_name, relationship, symptoms = \
+                SIMULATED_PATIENT_POOL[offset % len(SIMULATED_PATIENT_POOL)]
+            patient_id = f"sim-{hospital_id}-{doctor_index + 1}-{patient_index + 1}"
+            if connection.execute("SELECT 1 FROM patients WHERE patient_id = ?", (patient_id,)).fetchone():
+                continue
+            phone = f"(905) 555-{1000 + offset:04d}"
+            connection.execute("""INSERT INTO patients
+                (patient_id, patient_name, doctor_id, hospital_id, email, password_hash, date_of_birth,
+                 gender, health_card_number, phone, blood_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (patient_id, name, doctor["doctor_id"], hospital_id, f"{patient_id}@carepath.demo",
+                 password_hash, dob, gender, f"SIM-{dob[:4]}-{5000 + offset:04d}", phone, blood_type))
+            connection.execute("""INSERT INTO emergency_contacts (contact_id, patient_id, contact_name, relationship, phone)
+                VALUES (?, ?, ?, ?, ?)""", (f"ec-{patient_id}", patient_id, contact_name, relationship, phone))
+            connection.execute("""INSERT INTO emergency_contacts (contact_id, patient_id, contact_name, relationship, phone)
+                VALUES (?, ?, ?, ?, ?)""", (f"ec-{patient_id}-911", patient_id, "Emergency services", "Immediate danger", "911"))
+            for symptom_index, (text, severity) in enumerate(symptoms):
+                logged = today - timedelta(days=5 + 9 * symptom_index + patient_index)
+                resolved = logged + timedelta(days=6) if symptom_index and severity == "low" else None
+                connection.execute("INSERT INTO symptoms VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (f"symptom-{patient_id}-{symptom_index + 1}", patient_id, text, severity,
+                     "resolved" if resolved else "pending", logged.isoformat(),
+                     resolved.isoformat() if resolved else None))
+            appointment_date = today + timedelta(days=2 + offset % 12)
+            connection.execute("""INSERT INTO appointments
+                (appointment_id, patient_id, doctor_id, hospital_id, appointment_date, appointment_time,
+                 appointment_type, reason, severity, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled')""",
+                (f"appointment-{patient_id}", patient_id, doctor["doctor_id"], hospital_id,
+                 appointment_date.isoformat(), APPOINTMENT_TIMES[offset % len(APPOINTMENT_TIMES)],
+                 APPOINTMENT_TYPES[offset % len(APPOINTMENT_TYPES)], symptoms[0][0], symptoms[0][1]))
+
+def age_from_date_of_birth(date_of_birth):
+    """Whole years between a stored ISO birth date and today."""
+    try:
+        born = date.fromisoformat(date_of_birth)
+    except (TypeError, ValueError):
+        return None
+    today = date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
 def db():
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
+def apply_migrations(connection):
+    """Add columns introduced after a database was first created."""
+    columns = {row["name"] for row in connection.execute("PRAGMA table_info(patients)")}
+    if "blood_type" not in columns:
+        connection.execute("ALTER TABLE patients ADD COLUMN blood_type TEXT")
+
 def initialise_database():
     connection = db()
     connection.executescript((RESOURCE_ROOT / "schema.sql").read_text(encoding="utf-8"))
+    apply_migrations(connection)
     connection.executemany("INSERT OR IGNORE INTO hospitals VALUES (?, ?, ?, ?)", HOSPITALS)
     connection.executemany("INSERT OR IGNORE INTO hospitals VALUES (?, ?, ?, ?)", hospital_directory_rows())
     demo_password = hash_password("CarePath2026!")
@@ -102,9 +208,11 @@ def initialise_database():
     # Hamilton doctors
     connection.executemany("""INSERT OR IGNORE INTO doctors
         (doctor_id, doctor_name, hospital_id, specialty, email, password_hash, phone) VALUES (?, ?, ?, ?, ?, ?, ?)""", [
-        ("doc-hamilton-kim",    "Dr. Daniel Kim",   "hamilton-general",    "Emergency medicine", "daniel.kim@carepath.demo",    demo_password, "(905) 527-4322"),
-        ("doc-hamilton-flores", "Dr. Maria Flores", "juravinski",          "Internal medicine",  "maria.flores@carepath.demo",  demo_password, "(905) 521-2100"),
-        ("doc-hamilton-ali",    "Dr. Yasmine Ali",  "st-josephs-hamilton", "Family medicine",    "yasmine.ali@carepath.demo",   demo_password, "(905) 522-1155"),
+        ("doc-hamilton-kim",     "Dr. Daniel Kim",    "hamilton-general",    "Emergency medicine", "daniel.kim@carepath.demo",     demo_password, "(905) 527-4322"),
+        ("doc-hamilton-barrett", "Dr. Owen Barrett",  "hamilton-general",    "Cardiology",         "owen.barrett@carepath.demo",   demo_password, "(905) 527-4330"),
+        ("doc-hamilton-nair",    "Dr. Priya Nair",    "hamilton-general",    "Family medicine",    "priya.nair@carepath.demo",     demo_password, "(905) 527-4341"),
+        ("doc-hamilton-flores",  "Dr. Maria Flores",  "juravinski",          "Internal medicine",  "maria.flores@carepath.demo",   demo_password, "(905) 521-2100"),
+        ("doc-hamilton-ali",     "Dr. Yasmine Ali",   "st-josephs-hamilton", "Family medicine",    "yasmine.ali@carepath.demo",    demo_password, "(905) 522-1155"),
     ])
 
     # Hamilton admins
@@ -116,20 +224,47 @@ def initialise_database():
     ])
 
     # Hamilton patients
-    import uuid as _uuid
-    def _patient(pid, name, doc_id, hosp_id, dob, gender, hcn, phone):
+    def _patient(pid, name, doc_id, hosp_id, dob, gender, hcn, phone, blood_type):
         connection.execute("""INSERT OR IGNORE INTO patients
-            (patient_id, patient_name, doctor_id, hospital_id, email, password_hash, date_of_birth, gender, health_card_number, phone, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
-            (pid, name, doc_id, hosp_id, f"{pid}@carepath.demo", demo_password, dob, gender, hcn, phone))
+            (patient_id, patient_name, doctor_id, hospital_id, email, password_hash, date_of_birth, gender, health_card_number, phone, blood_type, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+            (pid, name, doc_id, hosp_id, f"{pid}@carepath.demo", demo_password, dob, gender, hcn, phone, blood_type))
 
-    _patient("carl-hutchinson", "Carl Hutchinson", "doc-hamilton-kim",    "hamilton-general", "1968-03-15", "Male",   "HUTC-1968-2291", "(905) 555-0141")
-    _patient("nadia-ross",      "Nadia Ross",      "doc-hamilton-flores", "juravinski",       "1992-07-22", "Female", "ROSS-1992-8847", "(905) 555-0162")
+    _patient("carl-hutchinson", "Carl Hutchinson", "doc-hamilton-kim",    "hamilton-general", "1968-03-15", "Male",   "HUTC-1968-2291", "(905) 555-0141", "A negative")
+    _patient("nadia-ross",      "Nadia Ross",      "doc-hamilton-flores", "juravinski",       "1992-07-22", "Female", "ROSS-1992-8847", "(905) 555-0162", "O positive")
+
+    today = date.today()
+    connection.executemany("INSERT OR IGNORE INTO symptoms VALUES (?, ?, ?, ?, ?, ?, ?)", [
+        ("symptom-hutch-1", "carl-hutchinson", "Shortness of breath on exertion", "high", "pending",
+         (today - timedelta(days=6)).isoformat(), None),
+        ("symptom-hutch-2", "carl-hutchinson", "Mild ankle swelling", "medium", "pending",
+         (today - timedelta(days=16)).isoformat(), None),
+        ("symptom-ross-1", "nadia-ross", "Persistent headaches", "medium", "pending",
+         (today - timedelta(days=10)).isoformat(), None),
+        ("symptom-ross-2", "nadia-ross", "Nausea with headaches", "low", "resolved",
+         (today - timedelta(days=18)).isoformat(), (today - timedelta(days=9)).isoformat()),
+    ])
+    connection.executemany("""INSERT OR IGNORE INTO appointments
+        (appointment_id, patient_id, doctor_id, hospital_id, appointment_date, appointment_time,
+         appointment_type, reason, severity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled')""", [
+        ("appointment-hutch-1", "carl-hutchinson", "doc-hamilton-kim", "hamilton-general",
+         (today + timedelta(days=4)).isoformat(), "09:00 AM", "Consultation", "Cardiac stress test pre-assessment", "high"),
+        ("appointment-hutch-2", "carl-hutchinson", "doc-hamilton-kim", "hamilton-general",
+         (today - timedelta(days=9)).isoformat(), "02:00 PM", "Lab review", "Review recent blood work", "medium"),
+        ("appointment-ross-1", "nadia-ross", "doc-hamilton-flores", "juravinski",
+         (today + timedelta(days=6)).isoformat(), "10:30 AM", "Follow-up", "Review headache symptoms", "medium"),
+    ])
 
     connection.execute("""INSERT OR IGNORE INTO emergency_contacts (contact_id, patient_id, contact_name, relationship, phone) VALUES (?, ?, ?, ?, ?)""",
         ("ec-hutch-1", "carl-hutchinson", "Sandra Hutchinson", "Spouse", "(905) 555-0141"))
     connection.execute("""INSERT OR IGNORE INTO emergency_contacts (contact_id, patient_id, contact_name, relationship, phone) VALUES (?, ?, ?, ?, ?)""",
         ("ec-ross-1", "nadia-ross", "Kevin Ross", "Husband", "(905) 555-0162"))
+    connection.executemany("""INSERT OR IGNORE INTO emergency_contacts (contact_id, patient_id, contact_name, relationship, phone) VALUES (?, ?, ?, ?, ?)""", [
+        ("ec-hutch-911", "carl-hutchinson", "Emergency services", "Immediate danger", "911"),
+        ("ec-ross-911", "nadia-ross", "Emergency services", "Immediate danger", "911"),
+    ])
+
+    seed_simulated_patients(connection, "hamilton-general", demo_password)
     connection.commit()
     connection.close()
 
@@ -184,7 +319,10 @@ class Handler(SimpleHTTPRequestHandler):
             connection = db()
             patients = [dict(row) for row in connection.execute("""SELECT p.patient_id AS id, p.patient_name AS name,
                 p.hospital_id AS facilityId, p.doctor_id AS primaryDoctorId, p.date_of_birth AS dateOfBirth,
-                p.gender AS sex, p.health_card_number AS healthCard FROM patients p ORDER BY p.patient_name""")]
+                p.gender AS sex, p.health_card_number AS healthCard, p.blood_type AS bloodType, p.phone,
+                (SELECT MAX(a.appointment_date) FROM appointments a
+                 WHERE a.patient_id = p.patient_id AND a.appointment_date <= DATE('now')) AS lastVisit
+                FROM patients p ORDER BY p.patient_name""")]
             doctors = [dict(row) for row in connection.execute("""SELECT doctor_id AS id, doctor_name AS name,
                 specialty, hospital_id AS facilityId, phone FROM doctors ORDER BY doctor_name""")]
             specialists = [dict(row) for row in connection.execute("""SELECT specialist_id AS id, specialist_name AS name,
@@ -195,11 +333,24 @@ class Handler(SimpleHTTPRequestHandler):
                 item = dict(row)
                 item["type"] = "symptom"
                 symptoms_by_patient.setdefault(item.pop("patient_id"), []).append(item)
+            contacts_by_patient = {}
+            for row in connection.execute("""SELECT patient_id, contact_name AS name, relationship, phone
+                FROM emergency_contacts ORDER BY contact_name"""):
+                contact = dict(row)
+                contacts_by_patient.setdefault(contact.pop("patient_id"), []).append(contact)
+            hospitals = [dict(row) for row in connection.execute("""SELECT hospital_id AS id, hospital_name AS name,
+                address, phone FROM hospitals WHERE hospital_id IN (SELECT hospital_id FROM patients)
+                OR hospital_id IN (SELECT hospital_id FROM doctors WHERE doctor_id IN (SELECT doctor_id FROM patients))
+                ORDER BY hospital_name""")]
             connection.close()
             for patient in patients:
-                patient.update({"bloodType": "Not provided", "healthCard": "****-****-" + patient["healthCard"][-4:],
-                    "issues": symptoms_by_patient.get(patient["id"], []), "emergencyContacts": []})
-            return self.send_json(200, {"patients": patients, "doctors": doctors, "specialists": specialists})
+                patient.update({"bloodType": patient["bloodType"] or "Not provided",
+                    "healthCard": "****-****-" + patient["healthCard"][-4:],
+                    "age": age_from_date_of_birth(patient["dateOfBirth"]),
+                    "issues": symptoms_by_patient.get(patient["id"], []),
+                    "emergencyContacts": contacts_by_patient.get(patient["id"], [])})
+            return self.send_json(200, {"patients": patients, "doctors": doctors,
+                "specialists": specialists, "hospitals": hospitals})
         if parsed_url.path.startswith("/api/patients/") and parsed_url.path.endswith("/appointments"):
             patient_id = parsed_url.path.split("/")[-2]
             if not self.authorize_patient(patient_id):
@@ -220,7 +371,7 @@ class Handler(SimpleHTTPRequestHandler):
             rows = [dict(row) for row in connection.execute("""SELECT a.appointment_date AS date, a.appointment_time AS time,
                 a.appointment_type AS type, a.reason, a.severity, p.patient_id AS patientId, p.patient_name AS patientName,
                 d.doctor_id AS doctorId, d.doctor_name AS doctorName, d.doctor_name AS specialistName, d.specialty,
-                a.hospital_id AS facilityId FROM appointments a JOIN patients p ON p.patient_id = a.patient_id
+                a.status, a.hospital_id AS facilityId FROM appointments a JOIN patients p ON p.patient_id = a.patient_id
                 JOIN doctors d ON d.doctor_id = a.doctor_id ORDER BY a.appointment_date, a.appointment_time""")]
             connection.close()
             return self.send_json(200, rows)
@@ -370,17 +521,18 @@ class Handler(SimpleHTTPRequestHandler):
             if not patient:
                 return self.send_json(400, {"error": "Your primary care team could not be found."})
             doctor_id = data.get("doctorId", "").strip() or patient["doctor_id"]
-            doctor = connection.execute("SELECT doctor_id, doctor_name FROM doctors WHERE doctor_id = ?", (doctor_id,)).fetchone()
+            doctor = connection.execute("SELECT doctor_id, doctor_name, hospital_id, specialty FROM doctors WHERE doctor_id = ?", (doctor_id,)).fetchone()
             if not doctor: return self.send_json(400, {"error": "Choose a valid provider."})
             appointment_id = f"appointment-{uuid.uuid4().hex[:10]}"
             connection.execute("""INSERT INTO appointments
                 (appointment_id, patient_id, doctor_id, hospital_id, appointment_date, appointment_time, appointment_type, reason, severity)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (appointment_id, patient_id, doctor["doctor_id"], patient["hospital_id"], appointment_date, appointment_time,
+                (appointment_id, patient_id, doctor["doctor_id"], doctor["hospital_id"], appointment_date, appointment_time,
                  appointment_type, reason, severity))
             connection.commit()
             return self.send_json(201, {"id": appointment_id, "date": appointment_date, "time": appointment_time,
-                "type": appointment_type, "reason": reason, "severity": severity, "provider": doctor["doctor_name"]})
+                "type": appointment_type, "reason": reason, "severity": severity, "provider": doctor["doctor_name"],
+                "doctorId": doctor["doctor_id"], "specialty": doctor["specialty"], "facilityId": doctor["hospital_id"]})
         finally:
             connection.close()
 

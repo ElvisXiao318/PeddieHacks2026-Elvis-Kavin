@@ -34,10 +34,16 @@
       <div class="dashboard-heading">
         <div>
           <p class="section-kicker">Provider portal</p>
-          <h1 class="page-title">Dr. Sarah Chen</h1>
-          <p class="page-subtitle">Manage your patients, referrals, and upcoming visits.</p>
+          <h1 class="page-title" id="provider-name">Welcome</h1>
+          <p class="page-subtitle" id="provider-subtitle">Manage your patients, referrals, and upcoming visits.</p>
         </div>
-        <span class="secure-badge">Secure provider view</span>
+        <div class="heading-actions">
+          <label class="sr-only" for="provider-scope">Choose whose records to show</label>
+          <select id="provider-scope">
+            <option value="mine">My patients</option>
+          </select>
+          <span class="secure-badge">Secure provider view</span>
+        </div>
       </div>
 
       <!-- Clients -->
@@ -48,6 +54,7 @@
               <p class="section-kicker">Patient roster</p>
               <h2>Your clients</h2>
               <p class="card-description">Select a client to view their profile, care facility, contacts, and full medical history.</p>
+              <p class="card-description" id="client-count"></p>
             </div>
             <label class="sr-only" for="client-search">Search clients</label>
             <input type="search" id="client-search" class="client-search" placeholder="Search clients…" autocomplete="off">
@@ -88,6 +95,16 @@
               <div class="contact-list" id="client-contacts" aria-label="Emergency contacts"></div>
             </section>
           </div>
+
+          <section class="card">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">Visits</p>
+                <h3>Appointments for this client</h3>
+              </div>
+            </div>
+            <div class="list-card" id="client-appointments" aria-label="Client appointments"></div>
+          </section>
 
           <section class="card facility-card">
             <div class="card-heading">
@@ -147,9 +164,9 @@
       <section id="panel-book" class="panel">
         <div class="panel-heading">
           <div>
-            <p class="section-kicker">Specialist referrals</p>
+            <p class="section-kicker">Visits and referrals</p>
             <h2>Book an appointment</h2>
-            <p class="card-description">Refer a client to a specialist in the area. Browse by specialty and facility.</p>
+            <p class="card-description">Book a visit with yourself or refer a client to another provider. Providers at your facility are listed by default — search by name, specialty, or hospital to look further.</p>
           </div>
         </div>
 
@@ -162,16 +179,15 @@
               </div>
               <div class="form-group">
                 <label for="specialty-filter">Specialty</label>
-                <select id="specialty-filter">
-                  <option value="">All specialties</option>
-                </select>
+                <select id="specialty-filter"></select>
               </div>
             </div>
 
             <div class="form-group">
-              <label>Specialists in the area</label>
-              <div class="specialist-grid" id="specialist-list" aria-label="Available specialists"></div>
-              <input type="hidden" id="booking-specialist" required>
+              <label for="provider-search">Provider</label>
+              <input type="search" id="provider-search" placeholder="Search providers by name, specialty, or hospital…" autocomplete="off">
+              <div class="specialist-grid" id="provider-list" aria-label="Available providers"></div>
+              <input type="hidden" id="booking-doctor">
             </div>
 
             <div class="form-grid">
@@ -185,18 +201,36 @@
                   <option value="">Select time…</option>
                   <option value="09:00 AM">09:00 AM</option>
                   <option value="10:30 AM">10:30 AM</option>
+                  <option value="11:15 AM">11:15 AM</option>
+                  <option value="01:45 PM">01:45 PM</option>
                   <option value="02:00 PM">02:00 PM</option>
                   <option value="03:30 PM">03:30 PM</option>
                 </select>
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="booking-reason">Reason for referral</label>
-              <textarea id="booking-reason" placeholder="Clinical reason for specialist visit…" required></textarea>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="booking-type">Appointment type</label>
+                <select id="booking-type" required></select>
+              </div>
+              <div class="form-group">
+                <label for="booking-severity">Severity</label>
+                <select id="booking-severity" required>
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Book specialist appointment</button>
+            <div class="form-group">
+              <label for="booking-reason">Reason for visit</label>
+              <textarea id="booking-reason" placeholder="Clinical reason for this appointment…" required></textarea>
+            </div>
+
+            <p class="error-msg" id="booking-message" role="alert"></p>
+            <button type="submit" class="btn btn-primary">Book appointment</button>
           </form>
         </div>
       </section>
@@ -208,6 +242,7 @@
             <p class="section-kicker">Your calendar</p>
             <h2>Schedule of appointments</h2>
             <p class="card-description">Upcoming visits with your clients and specialist referrals.</p>
+            <p class="card-description" id="schedule-count"></p>
           </div>
           <button type="button" class="btn btn-primary btn-sm" data-jump-panel="book">Book a visit</button>
         </div>
