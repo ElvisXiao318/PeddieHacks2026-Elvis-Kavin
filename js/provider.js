@@ -359,39 +359,26 @@ function renderClientSelectedFacility() {
       <h4>${escapeHtml(facility.name)}</h4>
       <p>${escapeHtml(facility.address)} · ${escapeHtml(facility.distance)}</p>
     </div>
-    ${facility.phone ? `<a class="btn btn-sm" href="tel:${facility.phone.replace(/\D/g, '')}">Call facility</a>` : ''}
+    <div class="selected-facility-actions">
+      <a
+        class="btn btn-sm"
+        href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(facility.address)}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >Get directions</a>
+      ${facility.phone ? `<a class="btn btn-sm" href="tel:${facility.phone.replace(/\D/g, '')}">Call facility</a>` : ''}
+    </div>
   `;
 }
 
 function renderClientFacilityMap() {
-  const el = document.getElementById('client-facility-map');
-  if (!el) return;
+  const iframe = document.getElementById('client-gmap-iframe');
+  if (!iframe) return;
 
-  const mapped = DEMO_FACILITIES.filter(
-    (facility) => Number.isFinite(facility.x) && Number.isFinite(facility.y),
-  );
-
-  el.innerHTML = `
-    <div class="map-road map-road-one"></div>
-    <div class="map-road map-road-two"></div>
-    <div class="map-road map-road-three"></div>
-    <div class="map-label map-label-north">Downtown Toronto</div>
-    <div class="map-label map-label-south">Lake Shore</div>
-    ${mapped
-      .map(
-        (facility) => `
-        <button
-          type="button"
-          class="map-marker${facility.id === selectedClientFacilityId ? ' active' : ''}"
-          style="left:${facility.x}%;top:${facility.y}%"
-          data-facility-id="${facility.id}"
-          aria-label="${escapeHtml(facility.name)}"
-          title="${escapeHtml(facility.name)}"
-        ></button>
-      `,
-      )
-      .join('')}
-  `;
+  const facility = getFacility(selectedClientFacilityId);
+  const query = encodeURIComponent(`${facility.name}, ${facility.address}`);
+  const src = `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  if (iframe.getAttribute('src') !== src) iframe.setAttribute('src', src);
 }
 
 function renderClientFacilityList(filter = '') {
@@ -453,11 +440,6 @@ function initClientList() {
   document.getElementById('client-facility-list')?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-facility-id]');
     if (button) highlightClientFacility(button.getAttribute('data-facility-id'));
-  });
-
-  document.getElementById('client-facility-map')?.addEventListener('click', (event) => {
-    const marker = event.target.closest('[data-facility-id]');
-    if (marker) highlightClientFacility(marker.getAttribute('data-facility-id'));
   });
 }
 

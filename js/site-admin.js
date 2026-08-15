@@ -47,7 +47,10 @@ function initPanels() {
   });
 }
 
-// ─── Load hospitals into a <select> ──────────────────────────────────────────
+// ─── Searchable hospital picker ───────────────────────────────────────────────
+
+const HOSPITAL_RESULT_LIMIT = 50;
+let hospitalsCache = [];
 
 async function fetchHospitals() {
   const response = await fetch('/api/hospitals');
@@ -55,17 +58,80 @@ async function fetchHospitals() {
   return response.json();
 }
 
-async function populateHospitalSelect(selectId, includeBlank = true) {
-  const select = document.getElementById(selectId);
-  if (!select) return;
+async function loadHospitals() {
   try {
-    const hospitals = await fetchHospitals();
-    select.innerHTML =
-      (includeBlank ? '<option value="">Select a hospital…</option>' : '') +
-      hospitals.map((h) => `<option value="${h.id}">${escapeHtml(h.name)}</option>`).join('');
+    hospitalsCache = await fetchHospitals();
   } catch {
-    select.innerHTML = '<option value="">Hospitals unavailable</option>';
+    hospitalsCache = [];
   }
+}
+
+function renderHospitalOptions(listEl, query) {
+  const q = query.trim().toLowerCase();
+  const matches = hospitalsCache.filter((h) =>
+    `${h.name} ${h.address || ''}`.toLowerCase().includes(q),
+  );
+
+  if (!matches.length) {
+    listEl.innerHTML = '<div class="empty-state"><p>No hospitals match this search.</p></div>';
+    return;
+  }
+
+  const shown = matches.slice(0, HOSPITAL_RESULT_LIMIT);
+  listEl.innerHTML =
+    shown
+      .map(
+        (h) => `
+          <button type="button" class="facility-item" data-hospital-id="${h.id}" data-hospital-name="${escapeHtml(h.name)}">
+            <span class="facility-icon" aria-hidden="true">+</span>
+            <span class="facility-item-copy">
+              <strong>${escapeHtml(h.name)}</strong>
+              <small>${escapeHtml(h.address || 'No address on file')}</small>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+        `,
+      )
+      .join('') +
+    (matches.length > shown.length
+      ? `<div class="empty-state"><p>Showing ${shown.length} of ${matches.length} — keep typing to narrow the list.</p></div>`
+      : '');
+}
+
+function initHospitalPicker(searchId, listId, valueId, onSelect) {
+  const search = document.getElementById(searchId);
+  const list = document.getElementById(listId);
+  const value = document.getElementById(valueId);
+  if (!search || !list || !value) return;
+
+  const open = () => {
+    renderHospitalOptions(list, search.value);
+    list.classList.add('open');
+  };
+
+  search.addEventListener('focus', open);
+  search.addEventListener('input', () => {
+    if (value.value) {
+      value.value = '';
+      onSelect?.('');
+    }
+    open();
+  });
+
+  list.addEventListener('click', (event) => {
+    const item = event.target.closest('[data-hospital-id]');
+    if (!item) return;
+    value.value = item.dataset.hospitalId;
+    search.value = item.dataset.hospitalName;
+    list.classList.remove('open');
+    onSelect?.(value.value);
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!search.contains(event.target) && !list.contains(event.target)) {
+      list.classList.remove('open');
+    }
+  });
 }
 
 // ─── Add record form ──────────────────────────────────────────────────────────
@@ -81,19 +147,24 @@ function initProvisionForm() {
     hospitalOnlyFields.forEach((f) => (f.style.display = isHospital ? '' : 'none'));
     document.getElementById('site-admin-email').required = !isHospital;
     document.getElementById('site-admin-password').required = !isHospital;
-    document.getElementById('site-admin-hospital').required = !isHospital;
+    document.getElementById('site-admin-hospital-search').required = !isHospital;
   }
 
   typeSelect?.addEventListener('change', updateFields);
   updateFields();
 
-  populateHospitalSelect('site-admin-hospital');
+  initHospitalPicker('site-admin-hospital-search', 'site-admin-hospital-list', 'site-admin-hospital');
 
   document.getElementById('site-admin-provision-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const value = (id) => document.getElementById(id)?.value.trim() ?? '';
     const type = value('site-admin-type');
     const isHospital = type === 'hospital';
+
+    if (!isHospital && !value('site-admin-hospital')) {
+      setMessage('site-admin-message', 'Select a hospital from the search list.');
+      return;
+    }
 
     const body = {
       type,
@@ -120,11 +191,8 @@ function initProvisionForm() {
       setMessage('site-admin-message', result.message, true);
       event.target.reset();
       updateFields();
-      // Refresh hospital dropdowns if a hospital was just added
-      if (isHospital) {
-        populateHospitalSelect('site-admin-hospital');
-        populateHospitalSelect('directory-hospital', true);
-      }
+      // Refresh hospital pickers if a hospital was just added
+      if (isHospital) loadHospitals();
     } catch (error) {
       setMessage('site-admin-message', error.message || 'Could not add this record.');
     }
@@ -215,7 +283,7 @@ async function refreshDirectory() {
     const [doctors, specialists, admins] = await Promise.all([
       fetch(`/api/doctors?hospitalId=${encodeURIComponent(hospitalId)}`).then((r) => r.json()),
       fetch(`/api/specialists?hospitalId=${encodeURIComponent(hospitalId)}`).then((r) => r.json()),
-      fetch(`/api/admins?hospitalId=${encodeURIComponent(hospitalId)}`).then((r) => r.json()),
+      fetch(`/api/admins?hospitalId=${encodeURIComponent(hospitalId)}`, { headers: authHeader() }).then((r) => r.json()),
     ]);
 
     if (doctorsEl)
@@ -240,8 +308,8 @@ async function refreshDirectory() {
 }
 
 async function initDirectory() {
-  await populateHospitalSelect('directory-hospital', true);
-  document.getElementById('directory-hospital')?.addEventListener('change', refreshDirectory);
+  await loadHospitals();
+  initHospitalPicker('directory-hospital-search', 'directory-hospital-list', 'directory-hospital', refreshDirectory);
 }
 
 // ─── Remove records (delegated click handler) ─────────────────────────────────
@@ -259,9 +327,8 @@ async function handleRemove(type, id, name) {
     const activePanel = document.querySelector('.panel.active');
     if (activePanel?.id === 'panel-hospitals') loadHospitalsList();
     if (activePanel?.id === 'panel-directory') refreshDirectory();
-    // Keep hospital dropdowns fresh
-    populateHospitalSelect('site-admin-hospital');
-    populateHospitalSelect('directory-hospital', true);
+    // Keep hospital pickers fresh
+    loadHospitals();
   } catch (error) {
     alert(error.message || 'Could not remove this record.');
   }

@@ -288,7 +288,7 @@ class Handler(SimpleHTTPRequestHandler):
         parsed_url = urlparse(self.path)
         if parsed_url.path == "/api/hospitals":
             connection = db()
-            rows = [dict(row) for row in connection.execute("SELECT hospital_id AS id, hospital_name AS name FROM hospitals ORDER BY hospital_name")]
+            rows = [dict(row) for row in connection.execute("SELECT hospital_id AS id, hospital_name AS name, address FROM hospitals ORDER BY hospital_name")]
             connection.close()
             return self.send_json(200, rows)
         if parsed_url.path == "/api/doctors":
