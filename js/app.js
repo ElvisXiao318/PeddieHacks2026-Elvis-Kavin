@@ -1,14 +1,14 @@
 /**
- * CareConnect — Shared utilities: themes, accessibility, text-to-speech
+ * CarePath — Shared utilities: themes, accessibility, text-to-speech
  */
 
 const STORAGE_KEYS = {
-  theme: 'careconnect-theme',
-  role: 'careconnect-role',
-  loggedIn: 'careconnect-logged-in',
-  userId: 'careconnect-user-id',
-  userName: 'careconnect-user-name',
-  sessionToken: 'careconnect-session-token',
+  theme: 'carepath-theme',
+  role: 'carepath-role',
+  loggedIn: 'carepath-logged-in',
+  userId: 'carepath-user-id',
+  userName: 'carepath-user-name',
+  sessionToken: 'carepath-session-token',
 };
 
 function getStored(key, fallback) {
@@ -126,9 +126,13 @@ function requireAuth(role) {
   }
 }
 
-function logout() {
+async function logout() {
+  try {
+    await fetch('/api/logout', { method: 'POST', headers: { Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` } });
+  } catch { /* Local sign-out still completes if the server is unavailable. */ }
   setStored(STORAGE_KEYS.loggedIn, 'false');
   setStored(STORAGE_KEYS.role, '');
+  setStored(STORAGE_KEYS.sessionToken, '');
   window.location.href = 'index.html';
 }
 

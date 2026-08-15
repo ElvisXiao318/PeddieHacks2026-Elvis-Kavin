@@ -1,5 +1,5 @@
 /**
- * CareConnect — Hospital admin dashboard
+ * CarePath — Hospital admin dashboard
  */
 
 requireAuth('admin');
@@ -160,7 +160,7 @@ function initAdminBooking() {
       .join('');
   }
 
-  document.getElementById('admin-booking-form')?.addEventListener('submit', (event) => {
+  document.getElementById('admin-booking-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const patientId = document.getElementById('admin-booking-patient').value;
@@ -173,6 +173,10 @@ function initAdminBooking() {
     const patient = getPatient(patientId);
     const doctor = HOSPITAL_DOCTORS.find((item) => item.id === doctorId);
     if (!patient || !doctor || !date || !time || !type || !reason) return;
+
+    const response = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` }, body: JSON.stringify({ patientId, doctorId, date, time, type, reason, severity: 'medium' }) });
+    const result = await response.json();
+    if (!response.ok) return alert(result.error || 'Unable to book appointment.');
 
     HOSPITAL_SCHEDULE.push({
       date,
@@ -447,7 +451,7 @@ function initClientList() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await CARECONNECT_DATA_READY;
+  await CAREPATH_DATA_READY;
   const title = document.getElementById('admin-hospital-name');
   if (title) title.textContent = hospital.name;
 

@@ -1,5 +1,5 @@
 /**
- * CareConnect — Healthcare provider dashboard
+ * CarePath — Healthcare provider dashboard
  */
 
 requireAuth('provider');
@@ -292,7 +292,7 @@ function initBookingForm() {
     renderSpecialistList();
   });
 
-  document.getElementById('specialist-booking-form')?.addEventListener('submit', (event) => {
+  document.getElementById('specialist-booking-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const patientId = document.getElementById('booking-patient').value;
@@ -304,6 +304,10 @@ function initBookingForm() {
     const patient = getPatient(patientId);
     const specialist = DEMO_SPECIALISTS.find((s) => s.id === specialistId);
     if (!patient || !specialist || !date || !time || !reason) return;
+
+    const response = await fetch('/api/appointments', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` }, body: JSON.stringify({ patientId, date, time, type: 'Specialist consult', reason, severity: 'medium' }) });
+    const result = await response.json();
+    if (!response.ok) return alert(result.error || 'Unable to book appointment.');
 
     PROVIDER_SCHEDULE.push({
       date,
@@ -396,7 +400,7 @@ function renderSchedule() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await CARECONNECT_DATA_READY;
+  await CAREPATH_DATA_READY;
   renderClientList();
   renderSchedule();
   initPanels();
