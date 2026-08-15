@@ -1,5 +1,5 @@
 /**
- * CarePath — Shared demo data
+ * CareConnect — Shared demo data
  */
 
 const DEMO_FACILITIES = [
@@ -387,7 +387,7 @@ function issueStatusBadge(status) {
 }
 
 /* Real accounts replace all clinical demo records. Empty data stays empty until it is created. */
-const CAREPATH_DATA_READY = fetch('/api/dashboard-data')
+const CARECONNECT_DATA_READY = fetch('/api/dashboard-data')
   .then((response) => response.ok ? response.json() : Promise.reject())
   .then((data) => {
     DEMO_PATIENTS.splice(0, DEMO_PATIENTS.length, ...data.patients);

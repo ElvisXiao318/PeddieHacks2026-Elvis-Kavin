@@ -1,14 +1,14 @@
 /**
- * CarePath — Shared utilities: themes, accessibility, text-to-speech
+ * CareConnect — Shared utilities: themes, accessibility, text-to-speech
  */
 
 const STORAGE_KEYS = {
-  theme: 'carepath-theme',
-  role: 'carepath-role',
-  loggedIn: 'carepath-logged-in',
-  userId: 'carepath-user-id',
-  userName: 'carepath-user-name',
-  sessionToken: 'carepath-session-token',
+  theme: 'careconnect-theme',
+  role: 'careconnect-role',
+  loggedIn: 'careconnect-logged-in',
+  userId: 'careconnect-user-id',
+  userName: 'careconnect-user-name',
+  sessionToken: 'careconnect-session-token',
 };
 
 function getStored(key, fallback) {
