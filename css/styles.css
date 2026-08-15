@@ -1,29 +1,37 @@
 /* CarePath — Responsive styles with theme & accessibility support */
 
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Fraunces", "Segoe UI", system-ui, serif;
   --radius: 10px;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow: 0 4px 20px rgba(9, 38, 64, 0.08);
+  --shadow-lg: 0 18px 44px rgba(9, 38, 64, 0.14);
   --transition: 0.2s ease;
 
   /* Light theme (default) */
-  --bg: #f4f8fb;
+  --bg: #f5f9fc;
   --bg-card: #ffffff;
-  --bg-elevated: #eef4f9;
+  --bg-elevated: #edf3f9;
   --text: #1a2b3c;
   --text-muted: #5a6d7e;
-  --primary: #0066a1;
-  --primary-hover: #004d7a;
-  --accent: #00857c;
-  --accent-soft: #e6f5f3;
-  --border: #d0dde8;
+  --heading: #0a2540;
+  --primary: #0b5fa0;
+  --primary-hover: #084876;
+  --primary-soft: #e5f0f9;
+  --accent: #00a896;
+  --accent-soft: #e2f7f4;
+  --signal: #ff9d4d;
+  --signal-soft: #fff1e2;
+  --border: #d7e3ec;
   --danger: #c0392b;
   --warning: #d68910;
   --success: #1e8449;
-  --focus-ring: 0 0 0 3px rgba(0, 102, 161, 0.35);
+  --focus-ring: 0 0 0 3px rgba(11, 95, 160, 0.35);
 
   /* Status indicator colors */
-  --status-open: #0066a1;
+  --status-open: #0b5fa0;
   --status-pending: #d68910;
   --status-resolved: #1e8449;
 }
@@ -34,19 +42,28 @@
   --bg-elevated: #243444;
   --text: #e8eef4;
   --text-muted: #9bb0c4;
+  --heading: #eef5fb;
   --primary: #4db8ff;
   --primary-hover: #7ecaff;
+  --primary-soft: #17293a;
   --accent: #3dd9c9;
   --accent-soft: #1a3330;
+  --signal: #ffb15c;
+  --signal-soft: #2e2013;
   --border: #344556;
   --danger: #ff6b6b;
   --warning: #f5b041;
   --success: #58d68d;
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.45);
   --focus-ring: 0 0 0 3px rgba(77, 184, 255, 0.35);
   --status-open: #4db8ff;
   --status-pending: #f5b041;
   --status-resolved: #58d68d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
 
 *,
@@ -67,6 +84,13 @@ body {
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--heading);
+  letter-spacing: -0.01em;
+  font-weight: 600;
 }
 
 img {
@@ -202,6 +226,7 @@ a:hover {
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
+  box-shadow: 0 6px 16px rgba(11, 95, 160, 0.28);
 }
 
 .btn-primary:hover {
@@ -234,8 +259,22 @@ a:hover {
 /* ---------- Hero ---------- */
 
 .hero {
-  padding: 3.5rem 0 3rem;
-  text-align: center;
+  padding: 4rem 0 3.5rem;
+  background:
+    radial-gradient(60% 90% at 88% 8%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
+    radial-gradient(50% 70% at 4% 96%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 70%);
+  overflow: hidden;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.hero-copy {
+  text-align: left;
 }
 
 .hero-badge {
@@ -246,33 +285,111 @@ a:hover {
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
 }
 
 .hero h1 {
-  font-size: clamp(1.75rem, 5vw, 2.75rem);
-  line-height: 1.2;
-  margin: 0 0 0.75rem;
+  font-size: clamp(2rem, 4.6vw, 3.1rem);
+  line-height: 1.12;
+  margin: 0 0 0.9rem;
 }
 
 .hero .tagline {
-  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
   color: var(--text-muted);
-  max-width: 640px;
-  margin: 0 auto 1.75rem;
+  max-width: 520px;
+  margin: 0 0 1.85rem;
 }
 
 .hero-actions {
   display: flex;
   gap: 0.75rem;
-  justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Signature element: the "path" that connects a patient's care */
+.hero-path {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 1.5rem;
+}
+
+.hero-path::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 22px;
+  bottom: 22px;
+  width: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--border) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+.hero-path::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 22px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 0 4px var(--signal-soft);
+  animation: travel-path 6s ease-in-out infinite;
+}
+
+@keyframes travel-path {
+  0%, 6% { top: 22px; opacity: 1; }
+  45% { opacity: 1; }
+  50% { top: calc(100% - 34px); opacity: 1; }
+  56% { opacity: 0; }
+  57% { top: 22px; opacity: 0; }
+  63% { opacity: 1; }
+  100% { top: 22px; opacity: 1; }
+}
+
+.path-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.9rem 0;
+}
+
+.path-node .node-dot {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  z-index: 1;
+  margin-left: -1px;
+}
+
+.path-node .node-label strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--heading);
+}
+
+.path-node .node-label span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
 }
 
 /* ---------- Sections ---------- */
 
 .section {
-  padding: 3rem 0;
+  padding: 3.5rem 0;
 }
 
 .section-alt {
@@ -281,12 +398,12 @@ a:hover {
 
 .section-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.25rem;
 }
 
 .section-header h2 {
-  font-size: clamp(1.35rem, 3vw, 1.85rem);
-  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  margin: 0 0 0.6rem;
 }
 
 .section-header p {
@@ -308,12 +425,22 @@ a:hover {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.35rem;
   box-shadow: var(--shadow);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.card.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
 }
 
 .card h3 {
@@ -327,6 +454,33 @@ a:hover {
   font-size: 0.92rem;
 }
 
+.card ul.feature-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card ul.feature-list li {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding-left: 1.35rem;
+  position: relative;
+}
+
+.card ul.feature-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .card-icon {
   width: 44px;
   height: 44px;
@@ -337,6 +491,62 @@ a:hover {
   place-items: center;
   font-size: 1.25rem;
   margin-bottom: 0.85rem;
+}
+
+/* ---------- Roadmap ---------- */
+
+.roadmap-list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  counter-reset: roadmap;
+}
+
+.roadmap-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  position: relative;
+}
+
+.roadmap-item::before {
+  counter-increment: roadmap;
+  content: "0" counter(roadmap);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--primary-soft);
+  -webkit-text-stroke: 1px var(--primary);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.roadmap-item h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.roadmap-item p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 860px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-copy {
+    text-align: center;
+  }
+  .hero-actions {
+    justify-content: center;
+  }
+  .hero-path {
+    max-width: 360px;
+    margin: 0 auto;
+  }
 }
 
 /* ---------- Status badges ---------- */
@@ -462,6 +672,160 @@ a:hover {
   flex: 1;
 }
 
+/* ---------- Health card scan ---------- */
+
+.scan-card {
+  grid-column: 1 / -1;
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin: 0.25rem 0 1.1rem;
+}
+
+.scan-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.scan-card-head h4 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--heading);
+}
+
+.scan-card-head p {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.scan-dropzone {
+  margin-top: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.scan-dropzone:hover,
+.scan-dropzone.dragover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.scan-dropzone:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.scan-dropzone .scan-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.scan-dropzone-text strong {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--heading);
+}
+
+.scan-dropzone-text span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.scan-preview-row {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.scan-preview-row.visible {
+  display: flex;
+}
+
+.scan-preview-row img {
+  width: 64px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.scan-status {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.scan-status.is-busy {
+  color: var(--primary);
+}
+
+.scan-status.is-success {
+  color: var(--success);
+}
+
+.scan-status.is-error {
+  color: var(--danger);
+}
+
+.scan-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  vertical-align: -2px;
+  animation: scan-spin 0.7s linear infinite;
+}
+
+@keyframes scan-spin {
+  to { transform: rotate(360deg); }
+}
+
+.scan-privacy {
+  margin: 0.7rem 0 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.form-group input.autofilled,
+.form-group select.autofilled {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  animation: autofill-flash 1.8s ease;
+}
+
+@keyframes autofill-flash {
+  0% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+  100% { box-shadow: none; }
+}
+
 .error-msg {
   color: var(--danger);
   font-size: 0.85rem;
@@ -556,6 +920,7 @@ a:hover {
 }
 
 .section-kicker {
+  display: block;
   margin: 0 0 0.3rem;
   color: var(--accent);
   font-size: 0.72rem;
@@ -699,8 +1064,20 @@ a:hover {
 .item-badges {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 0.4rem;
+}
+
+.btn-small {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.78rem;
+}
+
+.add-issue-form {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .severity-badge {

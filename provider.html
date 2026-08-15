@@ -120,6 +120,24 @@
                 <p class="card-description">Complete symptom and care history for this patient.</p>
               </div>
             </div>
+            <form id="add-issue-form" class="form-grid add-issue-form">
+              <div class="form-group">
+                <label for="add-issue-text">Log a new issue <span class="required">*</span></label>
+                <input id="add-issue-text" placeholder="e.g., Flu symptoms" required>
+              </div>
+              <div class="form-group">
+                <label for="add-issue-severity">Severity <span class="required">*</span></label>
+                <select id="add-issue-severity" required>
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-secondary" type="submit">Add issue</button>
+              </div>
+            </form>
+            <p class="error-msg" id="add-issue-message" role="alert"></p>
             <div class="list-card" id="client-history" aria-label="Patient issue history"></div>
           </section>
         </div>

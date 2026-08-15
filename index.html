@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="CarePath — The #1 Organization Hub for Canadian Hospitals. Organized Data. Quicker Decisions.">
   <title>CarePath — Canadian Hospital Organization Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -15,7 +17,10 @@
         CarePath
       </a>
       <nav class="nav-links" aria-label="Main navigation">
-        <a href="#about">About</a>
+        <a href="#connect">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#security">Security</a>
+        <a href="#roadmap">Roadmap</a>
       </nav>
       <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
         <button type="button" id="theme-toggle" class="btn btn-sm" aria-pressed="false">Dark Mode</button>
@@ -26,27 +31,136 @@
 
   <main>
     <section class="hero">
-      <div class="container">
-        <span class="hero-badge">Canadian Healthcare</span>
-        <h1>CarePath</h1>
-        <p class="tagline">Organized Data. Quicker Decisions.</p>
-        <div class="hero-actions">
-          <button type="button" id="hero-login" class="btn btn-primary">Secure Login</button>
-          <button type="button" id="hero-signup" class="btn">Create Patient Account</button>
-          <a href="#about" class="btn">About</a>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="hero-badge">Canadian Healthcare Infrastructure</span>
+          <h1>Every step of care, on one path.</h1>
+          <p class="tagline">CarePath connects patients, providers, and hospitals around a single organized record, so nothing gets lost between appointments.</p>
+          <div class="hero-actions">
+            <button type="button" id="hero-login" class="btn btn-primary">Secure Login</button>
+            <button type="button" id="hero-signup" class="btn">Create Patient Account</button>
+            <a href="#connect" class="btn">See how it works</a>
+          </div>
+        </div>
+        <div class="hero-path" aria-hidden="true">
+          <div class="path-node">
+            <span class="node-dot">🧑</span>
+            <span class="node-label"><strong>Patient logs a concern</strong><span>Symptoms, severity, and history</span></span>
+          </div>
+          <div class="path-node">
+            <span class="node-dot">📋</span>
+            <span class="node-label"><strong>Record stays organized</strong><span>One chart, always up to date</span></span>
+          </div>
+          <div class="path-node">
+            <span class="node-dot">🩺</span>
+            <span class="node-label"><strong>Provider reviews & responds</strong><span>Full context, no phone tag</span></span>
+          </div>
+          <div class="path-node">
+            <span class="node-dot">🏥</span>
+            <span class="node-label"><strong>Hospital coordinates care</strong><span>Faster, better-informed decisions</span></span>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="about" class="section section-alt">
+    <section id="connect" class="section">
       <div class="container">
         <div class="section-header">
-          <h2>About CarePath</h2>
-          <p>The organization hub for Canadian hospitals — a secure platform that centralizes patient information for healthcare professionals and patients.</p>
+          <span class="section-kicker">Why CarePath</span>
+          <h2>Built to close the gap between visits</h2>
+          <p>CarePath helps reduce communication barriers between doctors and patients. Critical information stays organized and accessible, tailored to each hospital, so care teams can make quicker, more accurate decisions.</p>
         </div>
         <div class="card" style="max-width:640px;margin:0 auto;">
-          <p style="margin:0 0 0.75rem;color:var(--text-muted);">CarePath helps reduce communication barriers between doctors and patients. Critical information stays organized and accessible, tailored to each hospital, so care teams can make quicker, more accurate decisions.</p>
           <p style="margin:0;color:var(--text-muted);">Sign in as a patient, healthcare provider, or hospital admin to access your dashboard.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-kicker">What's inside</span>
+          <h2>One platform, two views</h2>
+          <p>Patients and care teams see the same record, shaped around what each of them needs to do next.</p>
+        </div>
+        <div class="grid grid-2">
+          <div class="card card-hover">
+            <div class="card-icon" aria-hidden="true">🧑‍⚕️</div>
+            <h3>Built for patients</h3>
+            <ul class="feature-list">
+              <li>Upcoming appointments front and centre, with symptom and severity tracking</li>
+              <li>Personal info card — blood type, age, sex, and health card number</li>
+              <li>Draggable, zoomable map to find and select your main care facility</li>
+              <li>One-tap directions and a searchable list of nearby facilities</li>
+              <li>Book appointments with date, time, reason, and severity level</li>
+            </ul>
+          </div>
+          <div class="card card-hover">
+            <div class="card-icon" aria-hidden="true">🏥</div>
+            <h3>Built for care teams</h3>
+            <ul class="feature-list">
+              <li>Comprehensive, filterable patient list by hospital</li>
+              <li>Autocomplete for patient search, diagnoses, and medications</li>
+              <li>Text-to-speech for patient summaries and clinical notes</li>
+              <li>User-friendly dropdowns built for fast, accurate charting</li>
+              <li>Light / dark mode and accessibility tools on every page</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="security" class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-kicker">Security & compliance</span>
+          <h2>Your data, handled carefully</h2>
+          <p>CarePath is designed around the same expectations Canadian patients already have for their health information.</p>
+        </div>
+        <div class="grid grid-3">
+          <div class="card card-hover">
+            <div class="card-icon" aria-hidden="true">🔒</div>
+            <h3>Encryption</h3>
+            <p>Passwords are hashed, and sensitive fields are protected in transit and at rest.</p>
+          </div>
+          <div class="card card-hover">
+            <div class="card-icon" aria-hidden="true">🍁</div>
+            <h3>PIPEDA-aligned</h3>
+            <p>Built with Canadian privacy principles in mind — collect only what's needed, and tell people why.</p>
+          </div>
+          <div class="card card-hover">
+            <div class="card-icon" aria-hidden="true">🛡️</div>
+            <h3>Access control</h3>
+            <p>Role-based views mean patients, providers, and admins only ever see what's relevant to them.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap" class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-kicker">What's next</span>
+          <h2>Future roadmap</h2>
+          <p>CarePath is a working demo today. Here's what's planned next, in order.</p>
+        </div>
+        <div class="roadmap-list">
+          <div class="roadmap-item">
+            <h3>Complete the hospital directory</h3>
+            <p>Bring in the full Canadian facility list so every hospital, not just seeded demo data, is searchable.</p>
+          </div>
+          <div class="roadmap-item">
+            <h3>Full calendar & scheduling</h3>
+            <p>Real-time appointment booking that stays in sync across patients and care teams.</p>
+          </div>
+          <div class="roadmap-item">
+            <h3>User feedback sessions</h3>
+            <p>Structured feedback loops with real patients and providers to guide what we build next.</p>
+          </div>
+          <div class="roadmap-item">
+            <h3>Performance monitoring</h3>
+            <p>Track platform reliability and response times as usage grows.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -97,6 +211,28 @@
       <p class="subtitle">Your account is linked to your selected care facility and primary doctor.</p>
       <form id="signup-form">
         <div class="form-grid">
+          <div class="scan-card">
+            <div class="scan-card-head">
+              <div>
+                <h4>Scan your health card</h4>
+                <p>Auto-fill your name, date of birth, and health card number from a photo.</p>
+              </div>
+              <span class="hero-badge" style="margin:0;">Optional</span>
+            </div>
+            <button type="button" class="scan-dropzone" id="scan-dropzone" aria-describedby="scan-status">
+              <span class="scan-icon" aria-hidden="true">📷</span>
+              <span class="scan-dropzone-text">
+                <strong>Take a photo or upload your health card</strong>
+                <span>JPG or PNG · processed on this device only</span>
+              </span>
+            </button>
+            <input type="file" id="scan-file-input" accept="image/*" capture="environment" hidden>
+            <div class="scan-preview-row" id="scan-preview-row">
+              <img id="scan-preview-img" alt="Preview of uploaded health card">
+              <span class="scan-status" id="scan-status" role="status"></span>
+            </div>
+            <p class="scan-privacy">🔒 Your card image is read in your browser using on-device OCR and is never uploaded anywhere. Always double-check the fields below before submitting.</p>
+          </div>
           <div class="form-group"><label for="signup-name">Full name <span class="required" aria-hidden="true">*</span></label><input id="signup-name" required autocomplete="name"></div>
           <div class="form-group"><label for="signup-email">Email <span class="required" aria-hidden="true">*</span></label><input id="signup-email" type="email" required autocomplete="email"></div>
           <div class="form-group"><label for="signup-password">Password <span class="required" aria-hidden="true">*</span></label><input id="signup-password" type="password" minlength="8" required autocomplete="new-password" placeholder="At least 8 characters"></div>
@@ -118,5 +254,7 @@
 
   <script src="js/app.js"></script>
   <script src="js/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="js/healthcard-scan.js"></script>
 </body>
 </html>

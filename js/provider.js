@@ -137,6 +137,7 @@ function renderClientHistory(patient) {
         issue.status === 'resolved' && issue.resolvedDate
           ? `Recorded ${formatDate(issue.date)} · Resolved ${formatDate(issue.resolvedDate)}`
           : `Recorded ${formatDate(issue.date)}`;
+      const canResolve = issue.type !== 'case' && issue.status !== 'resolved' && issue.id;
 
       return `
         <article class="list-item history-item">
@@ -148,11 +149,71 @@ function renderClientHistory(patient) {
           <div class="item-badges">
             ${severityBadge(issue.severity)}
             ${issueStatusBadge(issue.status)}
+            ${canResolve ? `<button type="button" class="btn btn-secondary btn-small" data-resolve-issue="${issue.id}">Mark resolved</button>` : ''}
           </div>
         </article>
       `;
     })
     .join('');
+
+  el.querySelectorAll('[data-resolve-issue]').forEach((button) => {
+    button.addEventListener('click', () => resolveIssue(button.getAttribute('data-resolve-issue')));
+  });
+}
+
+async function resolveIssue(symptomId) {
+  const patient = getPatient(selectedPatientId);
+  if (!patient) return;
+  try {
+    const response = await fetch('/api/symptoms/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` },
+      body: JSON.stringify({ symptomId }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    const issue = patient.issues.find((item) => item.id === symptomId);
+    if (issue) { issue.status = 'resolved'; issue.resolvedDate = result.resolvedDate; }
+    renderClientHistory(patient);
+    renderClientList();
+  } catch (error) {
+    setAddIssueMessage(error.message || 'Could not resolve this issue.');
+  }
+}
+
+function setAddIssueMessage(message, success = false) {
+  const element = document.getElementById('add-issue-message');
+  if (!element) return;
+  element.textContent = message;
+  element.classList.add('visible');
+  element.style.color = success ? 'var(--success)' : 'var(--danger)';
+}
+
+function initAddIssueForm() {
+  document.getElementById('add-issue-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!selectedPatientId) return;
+    const text = document.getElementById('add-issue-text').value.trim();
+    const severity = document.getElementById('add-issue-severity').value;
+    try {
+      const response = await fetch('/api/symptoms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` },
+        body: JSON.stringify({ patientId: selectedPatientId, text, severity }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      const patient = getPatient(selectedPatientId);
+      patient.issues.unshift({ id: result.id, type: 'symptom', text: result.text, severity: result.severity, date: result.date, status: result.status });
+      event.target.reset();
+      document.getElementById('add-issue-severity').value = 'medium';
+      setAddIssueMessage('Issue added.', true);
+      renderClientHistory(patient);
+      renderClientList();
+    } catch (error) {
+      setAddIssueMessage(error.message || 'Could not add this issue.');
+    }
+  });
 }
 
 function renderClientSelectedFacility() {
@@ -406,4 +467,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   initPanels();
   initClientList();
   initBookingForm();
+  initAddIssueForm();
 });

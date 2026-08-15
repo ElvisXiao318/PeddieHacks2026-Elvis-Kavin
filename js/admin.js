@@ -30,9 +30,11 @@ async function initProvisioning() {
     const hospital = event.target.value === 'hospital';
     hospitalSelect.disabled = hospital;
     document.querySelectorAll('.provision-staff').forEach((field) => field.style.display = hospital ? 'none' : 'block');
+    document.querySelectorAll('.provision-hospital-field').forEach((field) => field.style.display = hospital ? 'block' : 'none');
     document.getElementById('provision-email').required = !hospital;
     document.getElementById('provision-password').required = !hospital;
   });
+  document.getElementById('provision-address').closest('.provision-hospital-field').style.display = document.getElementById('provision-type').value === 'hospital' ? 'block' : 'none';
   document.getElementById('provision-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const value = (id) => document.getElementById(id).value.trim();

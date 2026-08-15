@@ -130,9 +130,16 @@ class Handler(SimpleHTTPRequestHandler):
                 specialty, hospital_id AS facilityId, phone FROM doctors ORDER BY doctor_name""")]
             specialists = [dict(row) for row in connection.execute("""SELECT specialist_id AS id, specialist_name AS name,
                 specialty_type AS specialty, hospital_id AS facilityId, phone FROM specialists ORDER BY specialist_name""")]
+            symptoms_by_patient = {}
+            for row in connection.execute("""SELECT symptom_id AS id, patient_id, symptom_text AS text, severity,
+                logged_date AS date, status, resolved_date AS resolvedDate FROM symptoms ORDER BY logged_date DESC"""):
+                item = dict(row)
+                item["type"] = "symptom"
+                symptoms_by_patient.setdefault(item.pop("patient_id"), []).append(item)
             connection.close()
             for patient in patients:
-                patient.update({"bloodType": "Not provided", "healthCard": "****-****-" + patient["healthCard"][-4:], "issues": [], "emergencyContacts": []})
+                patient.update({"bloodType": "Not provided", "healthCard": "****-****-" + patient["healthCard"][-4:],
+                    "issues": symptoms_by_patient.get(patient["id"], []), "emergencyContacts": []})
             return self.send_json(200, {"patients": patients, "doctors": doctors, "specialists": specialists})
         if parsed_url.path.startswith("/api/patients/") and parsed_url.path.endswith("/appointments"):
             patient_id = parsed_url.path.split("/")[-2]
@@ -169,7 +176,7 @@ class Handler(SimpleHTTPRequestHandler):
             profile = dict(row); profile["health_card_number"] = "****-****-" + profile["health_card_number"][-4:]
             profile["emergency_contacts"] = [dict(contact) for contact in connection.execute("""SELECT contact_name AS name,
                 relationship, phone FROM emergency_contacts WHERE patient_id = ? ORDER BY contact_name""", (patient_id,))]
-            profile["symptoms"] = [dict(item) for item in connection.execute("""SELECT symptom_text AS text, severity,
+            profile["symptoms"] = [dict(item) for item in connection.execute("""SELECT symptom_id AS id, symptom_text AS text, severity,
                 logged_date AS date, status, resolved_date AS resolvedDate FROM symptoms WHERE patient_id = ? ORDER BY logged_date DESC""", (patient_id,))]
             profile["messages"] = [dict(item) for item in connection.execute("""SELECT sender AS 'from', subject, channel,
                 message_date AS date FROM care_messages WHERE patient_id = ? ORDER BY message_date DESC""", (patient_id,))]
@@ -188,6 +195,7 @@ class Handler(SimpleHTTPRequestHandler):
             if self.path == "/api/login": return self.login(data)
             if self.path == "/api/appointments": return self.create_appointment(data)
             if self.path == "/api/symptoms": return self.create_symptom(data)
+            if self.path == "/api/symptoms/resolve": return self.resolve_symptom(data)
             if self.path == "/api/logout": return self.logout()
             if self.path == "/api/admin/provision": return self.provision(data)
             self.send_json(404, {"error": "Unknown endpoint."})
@@ -208,17 +216,41 @@ class Handler(SimpleHTTPRequestHandler):
         patient_id = data.get("patientId", "").strip()
         text = data.get("text", "").strip()
         severity = data.get("severity", "").strip()
-        if not self.authorize_patient(patient_id):
-            return self.send_json(403, {"error": "Patient authorization is required."})
+        token = self.headers.get("Authorization", "").removeprefix("Bearer ")
+        session = SESSIONS.get(token, {})
+        if not (self.authorize_patient(patient_id) or session.get("role") in {"admin", "provider"}):
+            return self.send_json(403, {"error": "Authorization is required."})
         if not text or severity not in {"low", "medium", "high"}:
             return self.send_json(400, {"error": "Provide a symptom and severity."})
-        logged_date = date.today().isoformat()
         connection = db()
         try:
+            if not connection.execute("SELECT 1 FROM patients WHERE patient_id = ?", (patient_id,)).fetchone():
+                return self.send_json(400, {"error": "Patient could not be found."})
+            symptom_id = f"symptom-{uuid.uuid4().hex[:10]}"
+            logged_date = date.today().isoformat()
             connection.execute("INSERT INTO symptoms VALUES (?, ?, ?, ?, 'pending', ?, NULL)",
-                (f"symptom-{uuid.uuid4().hex[:10]}", patient_id, text, severity, logged_date))
+                (symptom_id, patient_id, text, severity, logged_date))
             connection.commit()
-            self.send_json(201, {"text": text, "severity": severity, "date": logged_date, "status": "pending"})
+            self.send_json(201, {"id": symptom_id, "text": text, "severity": severity, "date": logged_date, "status": "pending"})
+        finally:
+            connection.close()
+
+    def resolve_symptom(self, data):
+        symptom_id = data.get("symptomId", "").strip()
+        token = self.headers.get("Authorization", "").removeprefix("Bearer ")
+        session = SESSIONS.get(token, {})
+        if session.get("role") not in {"admin", "provider"}:
+            return self.send_json(403, {"error": "Staff authorization is required."})
+        if not symptom_id:
+            return self.send_json(400, {"error": "A symptom is required."})
+        connection = db()
+        try:
+            if not connection.execute("SELECT 1 FROM symptoms WHERE symptom_id = ?", (symptom_id,)).fetchone():
+                return self.send_json(404, {"error": "Issue not found."})
+            resolved_date = date.today().isoformat()
+            connection.execute("UPDATE symptoms SET status = 'resolved', resolved_date = ? WHERE symptom_id = ?", (resolved_date, symptom_id))
+            connection.commit()
+            self.send_json(200, {"symptomId": symptom_id, "status": "resolved", "resolvedDate": resolved_date})
         finally:
             connection.close()
 
