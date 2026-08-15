@@ -1,5 +1,5 @@
 /**
- * CarePath — Healthcare provider dashboard
+ * CareConnect — Healthcare provider dashboard
  */
 
 requireAuth('provider');
@@ -396,7 +396,7 @@ function renderSchedule() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await CAREPATH_DATA_READY;
+  await CARECONNECT_DATA_READY;
   renderClientList();
   renderSchedule();
   initPanels();

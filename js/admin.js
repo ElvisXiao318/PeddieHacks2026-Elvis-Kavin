@@ -1,5 +1,5 @@
 /**
- * CarePath — Hospital admin dashboard
+ * CareConnect — Hospital admin dashboard
  */
 
 requireAuth('admin');
@@ -447,7 +447,7 @@ function initClientList() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await CAREPATH_DATA_READY;
+  await CARECONNECT_DATA_READY;
   const title = document.getElementById('admin-hospital-name');
   if (title) title.textContent = hospital.name;
 
