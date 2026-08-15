@@ -4,6 +4,24 @@
 
 requireAuth('patient');
 
+async function hydratePatientProfile() {
+  const patientId = getStored(STORAGE_KEYS.userId, '');
+  if (!patientId) return;
+  try {
+    const response = await fetch(`/api/patients/${encodeURIComponent(patientId)}`);
+    if (!response.ok) return;
+    const patient = await response.json();
+    const birthday = new Date(`${patient.date_of_birth}T12:00:00`);
+    const age = new Date().getFullYear() - birthday.getFullYear() - (new Date() < new Date(new Date().getFullYear(), birthday.getMonth(), birthday.getDate()) ? 1 : 0);
+    document.getElementById('patient-welcome').textContent = `Welcome back, ${patient.patient_name}`;
+    document.getElementById('patient-age').textContent = age;
+    document.getElementById('patient-gender').textContent = patient.gender;
+    document.getElementById('patient-health-card').textContent = patient.health_card_number;
+    EMERGENCY_CONTACTS.splice(0, EMERGENCY_CONTACTS.length, ...patient.emergency_contacts);
+    renderEmergencyContacts();
+  } catch { /* The dashboard retains its illustrative values if the API is unavailable. */ }
+}
+
 const DEMO_APPOINTMENTS = [
   {
     date: '2026-08-20',
@@ -646,6 +664,13 @@ function initAppointmentForm() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  DEMO_APPOINTMENTS.splice(0);
+  DEMO_SYMPTOMS.splice(0);
+  DEMO_MISSED.splice(0);
+  DEMO_CASES.splice(0);
+  DEMO_MEDICATIONS.splice(0);
+  EMERGENCY_CONTACTS.splice(0);
+  hydratePatientProfile();
   renderAppointments();
   renderEmergencyContacts();
   renderFacilityList();

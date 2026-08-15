@@ -4,19 +4,28 @@ Responsive demo website for **CareConnect** — the organization hub for Canadia
 
 ## Quick Start
 
-Open `index.html` in a browser, or serve locally:
+The easiest option is to double-click **Start CareConnect.bat**, then open `http://localhost:8000`.
+
+Or install Python 3 and start the app from this folder:
 
 ```bash
-npx serve .
+python server.py
 ```
 
-Then visit `http://localhost:3000`.
+Then visit `http://localhost:8000`. Do not open the HTML files directly: account creation and login use the local API.
 
 ## Demo Login
 
-1. Click **Secure Login**
-2. Enter any email and a password (4+ characters)
-3. Choose **Patient** or **Healthcare Provider**
+1. Click **Create Patient Account** to add a stored patient account. The form collects name, age (via date of birth), gender, health-card number, phone, and hospital.
+2. To log in as seeded staff, use password `CareConnect2026!`:
+   - Provider: `sarah.chen@careconnect.demo`
+   - Admin: `admin@careconnect.demo`
+
+## Data storage
+
+`server.py` creates `careconnect.db` using `schema.sql`. It contains interconnected `hospitals`, `doctors`, `specialists`, `admins`, and `patients` tables. Hospital and staff records are safely seeded on first run; newly registered patient accounts persist in the database.
+
+The hospital table imports the supplied Open Database of Healthcare Facilities CSV (`C:\Users\hp\Downloads\odhf_v1.1 - odhf_v1.1.csv`) when the server starts. To make the project portable, copy that file beside `server.py` and rename it `hospital_directory.csv`; it is preferred automatically. The original directory includes 3,367 facilities plus its header row.
 
 ## Features Included
 
@@ -49,7 +58,7 @@ Then visit `http://localhost:3000`.
 ## Not Yet Implemented (by design)
 
 - Canadian hospital directory (awaiting your data)
-- Production authentication & encryption backend
+- Production authentication, encryption, and health-data compliance review (this local demo hashes passwords but is not production-ready)
 - Full calendar/scheduling (roadmap Step 2)
 - User feedback sessions (roadmap Step 3)
 - Performance monitoring (roadmap Step 4)

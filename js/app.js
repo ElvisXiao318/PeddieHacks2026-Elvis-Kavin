@@ -6,6 +6,9 @@ const STORAGE_KEYS = {
   theme: 'careconnect-theme',
   role: 'careconnect-role',
   loggedIn: 'careconnect-logged-in',
+  userId: 'careconnect-user-id',
+  userName: 'careconnect-user-name',
+  sessionToken: 'careconnect-session-token',
 };
 
 function getStored(key, fallback) {

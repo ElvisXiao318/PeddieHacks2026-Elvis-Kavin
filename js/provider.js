@@ -395,7 +395,8 @@ function renderSchedule() {
   ).join('');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await CARECONNECT_DATA_READY;
   renderClientList();
   renderSchedule();
   initPanels();

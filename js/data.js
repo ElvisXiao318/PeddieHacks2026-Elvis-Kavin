@@ -385,3 +385,21 @@ function issueStatusBadge(status) {
   if (status === 'open') return statusBadge('open', 'Open');
   return statusBadge('pending', 'Pending');
 }
+
+/* Real accounts replace all clinical demo records. Empty data stays empty until it is created. */
+const CARECONNECT_DATA_READY = fetch('/api/dashboard-data')
+  .then((response) => response.ok ? response.json() : Promise.reject())
+  .then((data) => {
+    DEMO_PATIENTS.splice(0, DEMO_PATIENTS.length, ...data.patients);
+    HOSPITAL_DOCTORS.splice(0, HOSPITAL_DOCTORS.length, ...data.doctors);
+    DEMO_SPECIALISTS.splice(0, DEMO_SPECIALISTS.length, ...data.specialists);
+    HOSPITAL_SCHEDULE.splice(0);
+    PROVIDER_SCHEDULE.splice(0);
+  })
+  .catch(() => {
+    DEMO_PATIENTS.splice(0);
+    HOSPITAL_DOCTORS.splice(0);
+    DEMO_SPECIALISTS.splice(0);
+    HOSPITAL_SCHEDULE.splice(0);
+    PROVIDER_SCHEDULE.splice(0);
+  });

@@ -34,7 +34,7 @@
       <div class="dashboard-heading">
         <div>
           <p class="section-kicker">Patient portal</p>
-          <h1 class="page-title">Welcome back, Demo Patient</h1>
+          <h1 class="page-title" id="patient-welcome">Welcome back</h1>
           <p class="page-subtitle">Keep your visits, health details, and active issues in one place.</p>
         </div>
         <span class="secure-badge">Secure patient view</span>
@@ -61,10 +61,10 @@
               <button type="button" class="btn btn-sm" data-tts="health-profile">Text to Speech</button>
             </div>
             <dl class="health-info profile-info" id="health-profile">
-              <div><dt>Blood type</dt><dd>A positive</dd></div>
-              <div><dt>Age</dt><dd>36</dd></div>
-              <div><dt>Sex</dt><dd>Female</dd></div>
-              <div><dt>Health card</dt><dd>****-****-1234</dd></div>
+              <div><dt>Blood type</dt><dd id="patient-blood-type">Not provided</dd></div>
+              <div><dt>Age</dt><dd id="patient-age">—</dd></div>
+              <div><dt>Sex</dt><dd id="patient-gender">—</dd></div>
+              <div><dt>Health card</dt><dd id="patient-health-card">—</dd></div>
             </dl>
           </section>
 

@@ -1,69 +1,42 @@
-/**
- * CareConnect — Secure login (demo)
- */
-
-const DEMO_MIN_PASSWORD = 4;
-
-function openLoginModal() {
-  const modal = document.getElementById('login-modal');
-  if (modal) {
-    modal.classList.add('open');
-    document.getElementById('login-email')?.focus();
-  }
+/** CareConnect account login and patient registration. Requires server.py. */
+function setError(id, message) { const el = document.getElementById(id); if (el) { el.textContent = message; el.classList.toggle('visible', Boolean(message)); } }
+function openModal(id, focusId) { document.getElementById(id)?.classList.add('open'); document.getElementById(focusId)?.focus(); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); setError(id === 'login-modal' ? 'login-error' : 'signup-error', ''); }
+function redirectFor(role) { window.location.href = role === 'patient' ? 'patient.html' : role === 'admin' ? 'admin.html' : 'provider.html'; }
+async function api(path, body) { const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Something went wrong.'); return result; }
+async function handleLogin(event) {
+  event.preventDefault(); const email = document.getElementById('login-email').value.trim(); const password = document.getElementById('login-password').value; const role = document.getElementById('login-role').value;
+  if (!email || !password || !role) return setError('login-error', 'Please fill in all fields.');
+  try { const account = await api('/api/login', { email, password, role }); setStored(STORAGE_KEYS.loggedIn, 'true'); setStored(STORAGE_KEYS.role, account.role); setStored(STORAGE_KEYS.userId, account.userId); setStored(STORAGE_KEYS.userName, account.name); setStored(STORAGE_KEYS.sessionToken, account.sessionToken); redirectFor(account.role); } catch (error) { setError('login-error', `${error.message} Start the CareConnect server before signing in.`); }
 }
-
-function closeLoginModal() {
-  const modal = document.getElementById('login-modal');
-  if (modal) modal.classList.remove('open');
-  const err = document.getElementById('login-error');
-  if (err) {
-    err.textContent = '';
-    err.classList.remove('visible');
-  }
+async function loadHospitals() {
+  const select = document.getElementById('signup-hospital'); if (!select) return;
+  try { const response = await fetch('/api/hospitals'); const hospitals = await response.json(); select.innerHTML = '<option value="">Select a facility…</option>' + hospitals.map((hospital) => `<option value="${hospital.id}">${hospital.name}</option>`).join(''); } catch { select.innerHTML = '<option value="">Server unavailable</option>'; }
 }
-
-function handleLogin(event) {
-  event.preventDefault();
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const role = document.getElementById('login-role').value;
-  const errorEl = document.getElementById('login-error');
-
-  if (!email || !password || !role) {
-    errorEl.textContent = 'Please fill in all fields.';
-    errorEl.classList.add('visible');
-    return;
-  }
-
-  if (password.length < DEMO_MIN_PASSWORD) {
-    errorEl.textContent = 'Password must be at least 4 characters.';
-    errorEl.classList.add('visible');
-    return;
-  }
-
-  setStored(STORAGE_KEYS.loggedIn, 'true');
-  setStored(STORAGE_KEYS.role, role);
-
-  if (role === 'patient') {
-    window.location.href = 'patient.html';
-  } else if (role === 'admin') {
-    window.location.href = 'admin.html';
-  } else {
-    window.location.href = 'provider.html';
-  }
+async function loadDoctors() {
+  const hospitalId = document.getElementById('signup-hospital')?.value;
+  const select = document.getElementById('signup-doctor');
+  if (!select) return;
+  select.disabled = true;
+  select.innerHTML = '<option value="">Loading doctors…</option>';
+  if (!hospitalId) { select.innerHTML = '<option value="">Select a hospital first…</option>'; return; }
+  try {
+    const response = await fetch(`/api/doctors?hospitalId=${encodeURIComponent(hospitalId)}`);
+    const doctors = await response.json();
+    select.innerHTML = '<option value="">Select your main doctor…</option>' + doctors.map((doctor) => `<option value="${doctor.id}">${doctor.name} — ${doctor.specialty}</option>`).join('');
+    select.disabled = false;
+  } catch { select.innerHTML = '<option value="">Doctors unavailable</option>'; }
 }
-
+async function handleSignup(event) {
+  event.preventDefault(); const value = (id) => document.getElementById(id).value.trim();
+  try { const account = await api('/api/signup', { name: value('signup-name'), email: value('signup-email'), password: document.getElementById('signup-password').value, dateOfBirth: value('signup-dob'), gender: value('signup-gender'), healthCard: value('signup-health-card'), phone: value('signup-phone'), hospitalId: value('signup-hospital'), doctorId: value('signup-doctor'), emergencyName: value('signup-emergency-name'), emergencyRelationship: value('signup-emergency-relationship'), emergencyPhone: value('signup-emergency-phone') }); setStored(STORAGE_KEYS.loggedIn, 'true'); setStored(STORAGE_KEYS.role, account.role); setStored(STORAGE_KEYS.userId, account.patientId); setStored(STORAGE_KEYS.userName, account.name); redirectFor('patient'); } catch (error) { setError('signup-error', `${error.message} Start the CareConnect server before creating an account.`); }
+}
 document.addEventListener('DOMContentLoaded', () => {
-  ['open-login', 'hero-login'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('click', openLoginModal);
-  });
-  document.getElementById('close-login')?.addEventListener('click', closeLoginModal);
-  document.getElementById('login-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'login-modal') closeLoginModal();
-  });
-  document.getElementById('login-form')?.addEventListener('submit', handleLogin);
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeLoginModal();
-  });
+  ['open-login', 'hero-login'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => openModal('login-modal', 'login-email')));
+  ['open-signup', 'hero-signup'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => { closeModal('login-modal'); openModal('signup-modal', 'signup-name'); loadHospitals(); }));
+  document.getElementById('close-login')?.addEventListener('click', () => closeModal('login-modal')); document.getElementById('close-signup')?.addEventListener('click', () => closeModal('signup-modal'));
+  ['login-modal', 'signup-modal'].forEach((id) => document.getElementById(id)?.addEventListener('click', (event) => { if (event.target.id === id) closeModal(id); }));
+  document.getElementById('login-form')?.addEventListener('submit', handleLogin); document.getElementById('signup-form')?.addEventListener('submit', handleSignup);
+  document.getElementById('signup-hospital')?.addEventListener('change', loadDoctors);
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeModal('login-modal'); closeModal('signup-modal'); } });
 });

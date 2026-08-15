@@ -27,6 +27,7 @@
         <button type="button" class="active" data-panel="schedule">Schedule</button>
         <button type="button" data-panel="book">Book an Appointment</button>
         <button type="button" data-panel="clients">Clients</button>
+        <button type="button" data-panel="provision">System access</button>
       </nav>
     </aside>
 
@@ -71,6 +72,32 @@
 
         <div class="schedule-view-panel" id="schedule-view-hospital">
           <div class="list-card appointment-list" id="hospital-schedule-list" aria-label="Hospital-wide appointment schedule"></div>
+        </div>
+      </section>
+
+      <section id="panel-provision" class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Restricted access</p>
+            <h2>Add a hospital or team member</h2>
+            <p class="card-description">Only signed-in hospital administrators can create these records.</p>
+          </div>
+        </div>
+        <div class="card">
+          <form id="provision-form">
+            <div class="form-grid">
+              <div class="form-group"><label for="provision-type">Record type <span class="required">*</span></label><select id="provision-type" required><option value="doctor">Doctor</option><option value="specialist">Specialist</option><option value="admin">Administrator</option><option value="hospital">Hospital</option></select></div>
+              <div class="form-group"><label for="provision-name">Name <span class="required">*</span></label><input id="provision-name" required></div>
+              <div class="form-group"><label for="provision-hospital">Hospital <span class="required">*</span></label><select id="provision-hospital" required><option>Loading hospitals…</option></select></div>
+              <div class="form-group"><label for="provision-specialty">Specialty / role</label><input id="provision-specialty" placeholder="e.g., Cardiology"></div>
+              <div class="form-group provision-staff"><label for="provision-email">Work email <span class="required">*</span></label><input id="provision-email" type="email"></div>
+              <div class="form-group provision-staff"><label for="provision-password">Temporary password <span class="required">*</span></label><input id="provision-password" type="password" minlength="8"></div>
+              <div class="form-group"><label for="provision-phone">Phone</label><input id="provision-phone" type="tel"></div>
+              <div class="form-group provision-hospital-field"><label for="provision-address">Hospital address</label><input id="provision-address"></div>
+            </div>
+            <p class="error-msg" id="provision-message" role="alert"></p>
+            <div class="form-actions"><button class="btn btn-primary" type="submit">Add securely</button></div>
+          </form>
         </div>
       </section>
 

@@ -12,6 +12,38 @@ let selectedPatientId = null;
 let selectedClientFacilityId = null;
 let clientSearchQuery = '';
 
+function setProvisionMessage(message, success = false) {
+  const element = document.getElementById('provision-message');
+  if (!element) return;
+  element.textContent = message;
+  element.classList.add('visible');
+  element.style.color = success ? 'var(--success)' : 'var(--danger)';
+}
+
+async function initProvisioning() {
+  const hospitalSelect = document.getElementById('provision-hospital');
+  try {
+    const hospitals = await fetch('/api/hospitals').then((response) => response.json());
+    hospitalSelect.innerHTML = '<option value="">Select a hospital…</option>' + hospitals.map((hospital) => `<option value="${hospital.id}">${escapeHtml(hospital.name)}</option>`).join('');
+  } catch { hospitalSelect.innerHTML = '<option value="">Hospitals unavailable</option>'; }
+  document.getElementById('provision-type')?.addEventListener('change', (event) => {
+    const hospital = event.target.value === 'hospital';
+    hospitalSelect.disabled = hospital;
+    document.querySelectorAll('.provision-staff').forEach((field) => field.style.display = hospital ? 'none' : 'block');
+    document.getElementById('provision-email').required = !hospital;
+    document.getElementById('provision-password').required = !hospital;
+  });
+  document.getElementById('provision-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const value = (id) => document.getElementById(id).value.trim();
+    try {
+      const response = await fetch('/api/admin/provision', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` }, body: JSON.stringify({ type: value('provision-type'), name: value('provision-name'), hospitalId: value('provision-hospital'), specialty: value('provision-specialty'), email: value('provision-email'), password: document.getElementById('provision-password').value, phone: value('provision-phone'), address: value('provision-address') }) });
+      const result = await response.json(); if (!response.ok) throw new Error(result.error);
+      setProvisionMessage(result.message, true); event.target.reset();
+    } catch (error) { setProvisionMessage(error.message || 'Could not add this record.'); }
+  });
+}
+
 function appointmentMarkup(appointment) {
   return `
     <article class="appointment-item">
@@ -414,7 +446,8 @@ function initClientList() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await CARECONNECT_DATA_READY;
   const title = document.getElementById('admin-hospital-name');
   if (title) title.textContent = hospital.name;
 
@@ -422,5 +455,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initScheduleViews();
   initAdminBooking();
   initClientList();
+  initProvisioning();
   renderClientList();
 });

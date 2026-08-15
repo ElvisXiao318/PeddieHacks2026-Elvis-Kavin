@@ -32,6 +32,7 @@
         <p class="tagline">Organized Data. Quicker Decisions.</p>
         <div class="hero-actions">
           <button type="button" id="hero-login" class="btn btn-primary">Secure Login</button>
+          <button type="button" id="hero-signup" class="btn">Create Patient Account</button>
           <a href="#about" class="btn">About</a>
         </div>
       </div>
@@ -86,7 +87,32 @@
           <button type="submit" class="btn btn-primary">Sign In Securely</button>
         </div>
       </form>
-      <p style="font-size:0.8rem;color:var(--text-muted);margin:1rem 0 0;">Demo: use any email and password (min. 4 characters).</p>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin:1rem 0 0;">New here? <button type="button" class="link-button" id="open-signup">Create a patient account</button>.</p>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="signup-modal" role="dialog" aria-labelledby="signup-title" aria-modal="true">
+    <div class="modal modal-wide">
+      <h2 id="signup-title">Create your patient account</h2>
+      <p class="subtitle">Your account is linked to your selected care facility and primary doctor.</p>
+      <form id="signup-form">
+        <div class="form-grid">
+          <div class="form-group"><label for="signup-name">Full name <span class="required" aria-hidden="true">*</span></label><input id="signup-name" required autocomplete="name"></div>
+          <div class="form-group"><label for="signup-email">Email <span class="required" aria-hidden="true">*</span></label><input id="signup-email" type="email" required autocomplete="email"></div>
+          <div class="form-group"><label for="signup-password">Password <span class="required" aria-hidden="true">*</span></label><input id="signup-password" type="password" minlength="8" required autocomplete="new-password" placeholder="At least 8 characters"></div>
+          <div class="form-group"><label for="signup-dob">Date of birth <span class="required" aria-hidden="true">*</span></label><input id="signup-dob" type="date" required></div>
+          <div class="form-group"><label for="signup-gender">Gender <span class="required" aria-hidden="true">*</span></label><select id="signup-gender" required><option value="">Select…</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Prefer not to say</option></select></div>
+          <div class="form-group"><label for="signup-health-card">Health card number <span class="required" aria-hidden="true">*</span></label><input id="signup-health-card" required placeholder="e.g., 1234-567-890"></div>
+          <div class="form-group"><label for="signup-phone">Phone <span aria-hidden="true">(optional)</span></label><input id="signup-phone" type="tel" autocomplete="tel"></div>
+          <div class="form-group"><label for="signup-hospital">Main care facility <span class="required" aria-hidden="true">*</span></label><select id="signup-hospital" required><option value="">Loading facilities…</option></select></div>
+          <div class="form-group"><label for="signup-doctor">Main doctor <span class="required" aria-hidden="true">*</span></label><select id="signup-doctor" required disabled><option value="">Select a hospital first…</option></select></div>
+          <div class="form-group"><label for="signup-emergency-name">Emergency contact name <span class="required" aria-hidden="true">*</span></label><input id="signup-emergency-name" required autocomplete="name"></div>
+          <div class="form-group"><label for="signup-emergency-relationship">Relationship <span class="required" aria-hidden="true">*</span></label><input id="signup-emergency-relationship" required placeholder="e.g., Parent, partner"></div>
+          <div class="form-group"><label for="signup-emergency-phone">Emergency contact phone <span class="required" aria-hidden="true">*</span></label><input id="signup-emergency-phone" type="tel" required autocomplete="tel"></div>
+        </div>
+        <p class="error-msg" id="signup-error" role="alert"></p>
+        <div class="form-actions"><button type="button" class="btn" id="close-signup">Cancel</button><button type="submit" class="btn btn-primary">Create account</button></div>
+      </form>
     </div>
   </div>
 
