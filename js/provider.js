@@ -433,13 +433,32 @@ function initClientList() {
 
   document.getElementById('back-to-clients')?.addEventListener('click', hideClientDetail);
 
-  document.getElementById('client-facility-search')?.addEventListener('input', (event) => {
-    renderClientFacilityList(event.target.value);
+  const clientFacilitySearch = document.getElementById('client-facility-search');
+  const clientFacilityList = document.getElementById('client-facility-list');
+
+  clientFacilitySearch?.addEventListener('focus', () => {
+    renderClientFacilityList(clientFacilitySearch.value);
+    clientFacilityList?.classList.add('open');
   });
 
-  document.getElementById('client-facility-list')?.addEventListener('click', (event) => {
+  clientFacilitySearch?.addEventListener('input', (event) => {
+    renderClientFacilityList(event.target.value);
+    clientFacilityList?.classList.add('open');
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!clientFacilitySearch?.contains(event.target) && !clientFacilityList?.contains(event.target)) {
+      clientFacilityList?.classList.remove('open');
+    }
+  });
+
+  clientFacilityList?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-facility-id]');
-    if (button) highlightClientFacility(button.getAttribute('data-facility-id'));
+    if (button) {
+      highlightClientFacility(button.getAttribute('data-facility-id'));
+      clientFacilityList.classList.remove('open');
+      if (clientFacilitySearch) clientFacilitySearch.value = '';
+    }
   });
 }
 
