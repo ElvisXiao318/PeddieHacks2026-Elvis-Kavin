@@ -19,7 +19,10 @@ Then visit `http://localhost:8000`. Do not open the HTML files directly: account
 1. Click **Create Patient Account** to add a stored patient account. The form collects name, age (via date of birth), gender, health-card number, phone, and hospital.
 2. To log in as seeded staff, use password `CarePath2026!`:
    - Provider: `sarah.chen@carepath.demo`
-   - Admin: `admin@carepath.demo`
+   - Hospital Admin: `admin@carepath.demo`
+   - Website Admin: `siteadmin@carepath.demo`
+
+Doctors, specialists, and hospital admins don't sign themselves up — the **Website Admin** portal (`site-admin.html`) is where their accounts get created so they can log in.
 
 ## Data storage
 

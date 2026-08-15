@@ -583,13 +583,32 @@ function initFacilitySelector() {
   initMapInteractions();
   centerMapOnFacility(selectedFacilityId, false);
 
-  document.getElementById('facility-search')?.addEventListener('input', (event) => {
-    renderFacilityList(event.target.value);
+  const facilitySearch = document.getElementById('facility-search');
+  const facilityList = document.getElementById('facility-list');
+
+  facilitySearch?.addEventListener('focus', () => {
+    renderFacilityList(facilitySearch.value);
+    facilityList?.classList.add('open');
   });
 
-  document.getElementById('facility-list')?.addEventListener('click', (event) => {
+  facilitySearch?.addEventListener('input', (event) => {
+    renderFacilityList(event.target.value);
+    facilityList?.classList.add('open');
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!facilitySearch?.contains(event.target) && !facilityList?.contains(event.target)) {
+      facilityList?.classList.remove('open');
+    }
+  });
+
+  facilityList?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-facility-id]');
-    if (button) selectFacility(button.getAttribute('data-facility-id'));
+    if (button) {
+      selectFacility(button.getAttribute('data-facility-id'));
+      facilityList.classList.remove('open');
+      if (facilitySearch) facilitySearch.value = '';
+    }
   });
 
   document.getElementById('facility-map')?.addEventListener('click', (event) => {

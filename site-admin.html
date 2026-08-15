@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en-CA" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Admin — CarePath</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon" aria-hidden="true">+</span>
+        CarePath
+      </a>
+      <span style="color:var(--text-muted);font-size:0.9rem;">Site Admin Portal</span>
+      <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility options">
+        <button type="button" id="theme-toggle" class="btn btn-sm" aria-pressed="false">🌙 Dark</button>
+        <button type="button" id="logout-btn" class="btn btn-sm">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container dashboard-layout">
+    <aside class="sidebar">
+      <nav aria-label="Site admin navigation">
+        <button type="button" class="active" data-panel="add">Add Record</button>
+        <button type="button" data-panel="hospitals">Hospitals</button>
+        <button type="button" data-panel="directory">Staff Directory</button>
+      </nav>
+    </aside>
+
+    <div class="main-content">
+      <div class="dashboard-heading">
+        <div>
+          <p class="section-kicker">Site admin</p>
+          <h1 class="page-title" id="site-admin-name">Site Administrator</h1>
+          <p class="page-subtitle">Add and remove hospitals, doctors, specialists, and hospital admins across all of CarePath.</p>
+        </div>
+        <span class="secure-badge">Site-wide access</span>
+      </div>
+
+      <!-- Add Record -->
+      <section id="panel-add" class="panel active">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Restricted access</p>
+            <h2>Add a hospital or team member</h2>
+            <p class="card-description">Hospitals, doctors, specialists, and hospital admins cannot sign up on their own — you create their accounts here.</p>
+          </div>
+        </div>
+        <div class="card">
+          <form id="site-admin-provision-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="site-admin-type">Record type <span class="required">*</span></label>
+                <select id="site-admin-type" required>
+                  <option value="doctor">Doctor</option>
+                  <option value="specialist">Specialist</option>
+                  <option value="admin">Hospital Admin</option>
+                  <option value="hospital">Hospital</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="site-admin-name-field">Full name <span class="required">*</span></label>
+                <input id="site-admin-name-field" required>
+              </div>
+              <div class="form-group provision-staff-field">
+                <label for="site-admin-hospital">Hospital <span class="required">*</span></label>
+                <select id="site-admin-hospital"><option>Loading hospitals…</option></select>
+              </div>
+              <div class="form-group provision-staff-field">
+                <label for="site-admin-specialty">Specialty / role</label>
+                <input id="site-admin-specialty" placeholder="e.g., Cardiology">
+              </div>
+              <div class="form-group provision-staff-field">
+                <label for="site-admin-email">Work email <span class="required">*</span></label>
+                <input id="site-admin-email" type="email">
+              </div>
+              <div class="form-group provision-staff-field">
+                <label for="site-admin-password">Temporary password <span class="required">*</span></label>
+                <input id="site-admin-password" type="password" minlength="8" placeholder="At least 8 characters">
+              </div>
+              <div class="form-group provision-staff-field">
+                <label for="site-admin-phone">Phone</label>
+                <input id="site-admin-phone" type="tel">
+              </div>
+              <div class="form-group provision-hospital-only" style="display:none;">
+                <label for="site-admin-address">Hospital address</label>
+                <input id="site-admin-address">
+              </div>
+              <div class="form-group provision-hospital-only" style="display:none;">
+                <label for="site-admin-hosp-phone">Hospital phone</label>
+                <input id="site-admin-hosp-phone" type="tel">
+              </div>
+            </div>
+            <p class="error-msg" id="site-admin-message" role="alert"></p>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Add securely</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Hospitals -->
+      <section id="panel-hospitals" class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Hospital network</p>
+            <h2>All hospitals on CarePath</h2>
+            <p class="card-description">Every hospital currently registered. Remove a hospital to revoke access for all staff at that facility.</p>
+          </div>
+        </div>
+        <div class="list-card" id="hospitals-list" aria-label="Hospital list">
+          <div class="empty-state"><p>Loading hospitals…</p></div>
+        </div>
+      </section>
+
+      <!-- Staff Directory -->
+      <section id="panel-directory" class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Staff directory</p>
+            <h2>Who has access at each hospital</h2>
+            <p class="card-description">Select a hospital to see doctors, specialists, and admins — and remove access if needed.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div class="form-group" style="margin:0;">
+            <label for="directory-hospital">Hospital</label>
+            <select id="directory-hospital"><option value="">Select a hospital…</option></select>
+          </div>
+        </div>
+        <div class="grid grid-2" style="gap:1.25rem;">
+          <div>
+            <h3 style="margin:0 0 0.75rem;font-size:1rem;">Doctors</h3>
+            <div class="list-card" id="directory-doctors" aria-label="Doctors at this hospital">
+              <div class="empty-state"><p>Select a hospital above.</p></div>
+            </div>
+          </div>
+          <div>
+            <h3 style="margin:0 0 0.75rem;font-size:1rem;">Specialists</h3>
+            <div class="list-card" id="directory-specialists" aria-label="Specialists at this hospital">
+              <div class="empty-state"><p>Select a hospital above.</p></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem;">
+          <h3 style="margin:0 0 0.75rem;font-size:1rem;">Hospital Admins</h3>
+          <div class="list-card" id="directory-admins" aria-label="Admins at this hospital">
+            <div class="empty-state"><p>Select a hospital above.</p></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/site-admin.js"></script>
+</body>
+</html>

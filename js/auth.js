@@ -2,7 +2,7 @@
 function setError(id, message) { const el = document.getElementById(id); if (el) { el.textContent = message; el.classList.toggle('visible', Boolean(message)); } }
 function openModal(id, focusId) { document.getElementById(id)?.classList.add('open'); document.getElementById(focusId)?.focus(); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); setError(id === 'login-modal' ? 'login-error' : 'signup-error', ''); }
-function redirectFor(role) { window.location.href = role === 'patient' ? 'patient.html' : role === 'admin' ? 'admin.html' : 'provider.html'; }
+function redirectFor(role) { window.location.href = role === 'patient' ? 'patient.html' : role === 'admin' ? 'admin.html' : role === 'site-admin' ? 'site-admin.html' : 'provider.html'; }
 async function api(path, body) { const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Something went wrong.'); return result; }
 async function handleLogin(event) {
   event.preventDefault(); const email = document.getElementById('login-email').value.trim(); const password = document.getElementById('login-password').value; const role = document.getElementById('login-role').value;

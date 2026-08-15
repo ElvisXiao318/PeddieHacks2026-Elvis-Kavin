@@ -12,40 +12,6 @@ let selectedPatientId = null;
 let selectedClientFacilityId = null;
 let clientSearchQuery = '';
 
-function setProvisionMessage(message, success = false) {
-  const element = document.getElementById('provision-message');
-  if (!element) return;
-  element.textContent = message;
-  element.classList.add('visible');
-  element.style.color = success ? 'var(--success)' : 'var(--danger)';
-}
-
-async function initProvisioning() {
-  const hospitalSelect = document.getElementById('provision-hospital');
-  try {
-    const hospitals = await fetch('/api/hospitals').then((response) => response.json());
-    hospitalSelect.innerHTML = '<option value="">Select a hospital…</option>' + hospitals.map((hospital) => `<option value="${hospital.id}">${escapeHtml(hospital.name)}</option>`).join('');
-  } catch { hospitalSelect.innerHTML = '<option value="">Hospitals unavailable</option>'; }
-  document.getElementById('provision-type')?.addEventListener('change', (event) => {
-    const hospital = event.target.value === 'hospital';
-    hospitalSelect.disabled = hospital;
-    document.querySelectorAll('.provision-staff').forEach((field) => field.style.display = hospital ? 'none' : 'block');
-    document.querySelectorAll('.provision-hospital-field').forEach((field) => field.style.display = hospital ? 'block' : 'none');
-    document.getElementById('provision-email').required = !hospital;
-    document.getElementById('provision-password').required = !hospital;
-  });
-  document.getElementById('provision-address').closest('.provision-hospital-field').style.display = document.getElementById('provision-type').value === 'hospital' ? 'block' : 'none';
-  document.getElementById('provision-form')?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const value = (id) => document.getElementById(id).value.trim();
-    try {
-      const response = await fetch('/api/admin/provision', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` }, body: JSON.stringify({ type: value('provision-type'), name: value('provision-name'), hospitalId: value('provision-hospital'), specialty: value('provision-specialty'), email: value('provision-email'), password: document.getElementById('provision-password').value, phone: value('provision-phone'), address: value('provision-address') }) });
-      const result = await response.json(); if (!response.ok) throw new Error(result.error);
-      setProvisionMessage(result.message, true); event.target.reset();
-    } catch (error) { setProvisionMessage(error.message || 'Could not add this record.'); }
-  });
-}
-
 function appointmentMarkup(appointment) {
   return `
     <article class="appointment-item">
@@ -437,13 +403,32 @@ function initClientList() {
 
   document.getElementById('admin-back-to-clients')?.addEventListener('click', hideClientDetail);
 
-  document.getElementById('admin-client-facility-search')?.addEventListener('input', (event) => {
-    renderClientFacilityList(event.target.value);
+  const clientFacilitySearch = document.getElementById('admin-client-facility-search');
+  const clientFacilityList = document.getElementById('admin-client-facility-list');
+
+  clientFacilitySearch?.addEventListener('focus', () => {
+    renderClientFacilityList(clientFacilitySearch.value);
+    clientFacilityList?.classList.add('open');
   });
 
-  document.getElementById('admin-client-facility-list')?.addEventListener('click', (event) => {
+  clientFacilitySearch?.addEventListener('input', (event) => {
+    renderClientFacilityList(event.target.value);
+    clientFacilityList?.classList.add('open');
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!clientFacilitySearch?.contains(event.target) && !clientFacilityList?.contains(event.target)) {
+      clientFacilityList?.classList.remove('open');
+    }
+  });
+
+  clientFacilityList?.addEventListener('click', (event) => {
     const button = event.target.closest('[data-facility-id]');
-    if (button) highlightClientFacility(button.getAttribute('data-facility-id'));
+    if (button) {
+      highlightClientFacility(button.getAttribute('data-facility-id'));
+      clientFacilityList.classList.remove('open');
+      if (clientFacilitySearch) clientFacilitySearch.value = '';
+    }
   });
 
   document.getElementById('admin-client-facility-map')?.addEventListener('click', (event) => {
@@ -461,6 +446,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   initScheduleViews();
   initAdminBooking();
   initClientList();
-  initProvisioning();
   renderClientList();
 });

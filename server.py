@@ -88,6 +88,48 @@ def initialise_database():
     connection.execute("""INSERT OR IGNORE INTO admins
         (admin_id, admin_name, hospital_id, email, password_hash) VALUES (?, ?, ?, ?, ?)""",
         ("admin-stm-1", "Morgan Blake", "st-michaels", "admin@carepath.demo", demo_password))
+    connection.execute("""INSERT OR IGNORE INTO site_admins
+        (site_admin_id, site_admin_name, email, password_hash) VALUES (?, ?, ?, ?)""",
+        ("site-admin-1", "Jordan Lee — Website Administrator", "siteadmin@carepath.demo", demo_password))
+
+    # Hamilton hospitals
+    connection.executemany("INSERT OR IGNORE INTO hospitals (hospital_id, hospital_name, address, phone) VALUES (?, ?, ?, ?)", [
+        ("hamilton-general",    "Hamilton General Hospital",          "237 Barton Street East, Hamilton, ON", "(905) 527-4322"),
+        ("juravinski",          "Juravinski Hospital",                "711 Concession Street, Hamilton, ON",  "(905) 521-2100"),
+        ("st-josephs-hamilton", "St. Joseph's Healthcare Hamilton",   "50 Charlton Avenue East, Hamilton, ON","(905) 522-1155"),
+    ])
+
+    # Hamilton doctors
+    connection.executemany("""INSERT OR IGNORE INTO doctors
+        (doctor_id, doctor_name, hospital_id, specialty, email, password_hash, phone) VALUES (?, ?, ?, ?, ?, ?, ?)""", [
+        ("doc-hamilton-kim",    "Dr. Daniel Kim",   "hamilton-general",    "Emergency medicine", "daniel.kim@carepath.demo",    demo_password, "(905) 527-4322"),
+        ("doc-hamilton-flores", "Dr. Maria Flores", "juravinski",          "Internal medicine",  "maria.flores@carepath.demo",  demo_password, "(905) 521-2100"),
+        ("doc-hamilton-ali",    "Dr. Yasmine Ali",  "st-josephs-hamilton", "Family medicine",    "yasmine.ali@carepath.demo",   demo_password, "(905) 522-1155"),
+    ])
+
+    # Hamilton admins
+    connection.executemany("""INSERT OR IGNORE INTO admins
+        (admin_id, admin_name, hospital_id, email, password_hash) VALUES (?, ?, ?, ?, ?)""", [
+        ("admin-hamilton-general",    "Hospital Administrator — Hamilton General",          "hamilton-general",    f"admin-hamilton-general@carepath.demo",    demo_password),
+        ("admin-juravinski",          "Hospital Administrator — Juravinski",                "juravinski",          f"admin-juravinski@carepath.demo",          demo_password),
+        ("admin-st-josephs-hamilton", "Hospital Administrator — St. Joseph's Hamilton",     "st-josephs-hamilton", f"admin-st-josephs-hamilton@carepath.demo", demo_password),
+    ])
+
+    # Hamilton patients
+    import uuid as _uuid
+    def _patient(pid, name, doc_id, hosp_id, dob, gender, hcn, phone):
+        connection.execute("""INSERT OR IGNORE INTO patients
+            (patient_id, patient_name, doctor_id, hospital_id, email, password_hash, date_of_birth, gender, health_card_number, phone, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+            (pid, name, doc_id, hosp_id, f"{pid}@carepath.demo", demo_password, dob, gender, hcn, phone))
+
+    _patient("carl-hutchinson", "Carl Hutchinson", "doc-hamilton-kim",    "hamilton-general", "1968-03-15", "Male",   "HUTC-1968-2291", "(905) 555-0141")
+    _patient("nadia-ross",      "Nadia Ross",      "doc-hamilton-flores", "juravinski",       "1992-07-22", "Female", "ROSS-1992-8847", "(905) 555-0162")
+
+    connection.execute("""INSERT OR IGNORE INTO emergency_contacts (contact_id, patient_id, contact_name, relationship, phone) VALUES (?, ?, ?, ?, ?)""",
+        ("ec-hutch-1", "carl-hutchinson", "Sandra Hutchinson", "Spouse", "(905) 555-0141"))
+    connection.execute("""INSERT OR IGNORE INTO emergency_contacts (contact_id, patient_id, contact_name, relationship, phone) VALUES (?, ?, ?, ?, ?)""",
+        ("ec-ross-1", "nadia-ross", "Kevin Ross", "Husband", "(905) 555-0162"))
     connection.commit()
     connection.close()
 
@@ -118,7 +160,24 @@ class Handler(SimpleHTTPRequestHandler):
             hospital_id = parse_qs(parsed_url.query).get("hospitalId", [""])[0]
             connection = db()
             rows = [dict(row) for row in connection.execute("""SELECT doctor_id AS id, doctor_name AS name,
-                specialty FROM doctors WHERE hospital_id = ? ORDER BY doctor_name""", (hospital_id,))]
+                specialty, email FROM doctors WHERE hospital_id = ? ORDER BY doctor_name""", (hospital_id,))]
+            connection.close()
+            return self.send_json(200, rows)
+        if parsed_url.path == "/api/specialists":
+            hospital_id = parse_qs(parsed_url.query).get("hospitalId", [""])[0]
+            connection = db()
+            rows = [dict(row) for row in connection.execute("""SELECT specialist_id AS id, specialist_name AS name,
+                specialty_type AS specialty, email FROM specialists WHERE hospital_id = ? ORDER BY specialist_name""", (hospital_id,))]
+            connection.close()
+            return self.send_json(200, rows)
+        if parsed_url.path == "/api/admins":
+            token = self.headers.get("Authorization", "").removeprefix("Bearer ")
+            if SESSIONS.get(token, {}).get("role") != "site-admin":
+                return self.send_json(403, {"error": "Site administrator authorization is required."})
+            hospital_id = parse_qs(parsed_url.query).get("hospitalId", [""])[0]
+            connection = db()
+            rows = [dict(row) for row in connection.execute("""SELECT admin_id AS id, admin_name AS name,
+                email FROM admins WHERE hospital_id = ? ORDER BY admin_name""", (hospital_id,))]
             connection.close()
             return self.send_json(200, rows)
         if self.path == "/api/dashboard-data":
@@ -201,6 +260,39 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(404, {"error": "Unknown endpoint."})
         except json.JSONDecodeError:
             self.send_json(400, {"error": "Invalid request."})
+
+    def do_DELETE(self):
+        token = self.headers.get("Authorization", "").removeprefix("Bearer ")
+        session_role = SESSIONS.get(token, {}).get("role")
+        if session_role != "site-admin":
+            return self.send_json(403, {"error": "Site administrator authorization is required."})
+        parsed = urlparse(self.path)
+        parts = parsed.path.strip("/").split("/")
+        # Expected: /api/admin/remove/<type>/<id>
+        if len(parts) == 5 and parts[:3] == ["api", "admin", "remove"]:
+            record_type, record_id = parts[3], parts[4]
+            type_map = {
+                "hospital": ("hospitals", "hospital_id"),
+                "doctor": ("doctors", "doctor_id"),
+                "specialist": ("specialists", "specialist_id"),
+                "admin": ("admins", "admin_id"),
+            }
+            if record_type not in type_map:
+                return self.send_json(400, {"error": "Unknown record type."})
+            table, id_col = type_map[record_type]
+            connection = db()
+            try:
+                cursor = connection.execute(f"DELETE FROM {table} WHERE {id_col} = ?", (record_id,))
+                connection.commit()
+                if cursor.rowcount == 0:
+                    return self.send_json(404, {"error": "Record not found."})
+                self.send_json(200, {"message": f"{record_type.title()} removed successfully."})
+            except sqlite3.IntegrityError as error:
+                self.send_json(400, {"error": str(error)})
+            finally:
+                connection.close()
+        else:
+            self.send_json(404, {"error": "Unknown endpoint."})
 
     def authorize_patient(self, patient_id):
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")
@@ -324,25 +416,27 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(400, {"error": str(error)})
 
     def login(self, data):
-        role = data.get("role"); table = {"patient": "patients", "provider": "doctors", "admin": "admins", "specialist": "specialists"}.get(role)
+        role = data.get("role"); table = {"patient": "patients", "provider": "doctors", "admin": "admins", "specialist": "specialists", "site-admin": "site_admins"}.get(role)
         if not table: return self.send_json(400, {"error": "Select a valid role."})
         connection = db()
         row = connection.execute(f"SELECT * FROM {table} WHERE email = ? AND password_hash = ?", (data.get("email", "").lower().strip(), hash_password(data.get("password", "")))).fetchone()
         connection.close()
         if not row: return self.send_json(401, {"error": "Email, password, or role is incorrect."})
-        identifier = row["patient_id"] if role == "patient" else row["doctor_id"] if role == "provider" else row["admin_id"] if role == "admin" else row["specialist_id"]
+        identifier = row["patient_id"] if role == "patient" else row["doctor_id"] if role == "provider" else row["admin_id"] if role == "admin" else row["site_admin_id"] if role == "site-admin" else row["specialist_id"]
         session_token = secrets.token_urlsafe(32)
         SESSIONS[session_token] = {"role": "provider" if role == "specialist" else role, "userId": identifier}
         self.send_json(200, {"role": "provider" if role == "specialist" else role, "userId": identifier, "name": row[1], "sessionToken": session_token})
 
     def provision(self, data):
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")
-        if SESSIONS.get(token, {}).get("role") != "admin":
-            return self.send_json(403, {"error": "Administrator authorization is required."})
+        session_role = SESSIONS.get(token, {}).get("role")
+        if session_role != "site-admin":
+            return self.send_json(403, {"error": "Site administrator authorization is required."})
         record_type = data.get("type")
+        allowed_types = {"hospital", "doctor", "specialist", "admin"}
         name, email, password = (data.get(key, "").strip() for key in ("name", "email", "password"))
-        if record_type not in {"hospital", "doctor", "specialist", "admin"} or not name:
-            return self.send_json(400, {"error": "Choose a record type and provide a name."})
+        if record_type not in allowed_types or not name:
+            return self.send_json(400, {"error": "Choose a valid record type and provide a name."})
         connection = db()
         try:
             if record_type == "hospital":

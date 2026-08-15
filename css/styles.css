@@ -1298,16 +1298,32 @@ a:hover {
   font-weight: 600;
 }
 
+.facility-directory {
+  position: relative;
+}
+
 .facility-directory input[type="search"] {
   width: 100%;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 }
 
 .facility-list {
-  max-height: 300px;
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  max-height: 220px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+  display: none;
+}
+
+.facility-list.open {
+  display: block;
 }
 
 .facility-item {

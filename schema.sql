@@ -35,6 +35,13 @@ CREATE TABLE IF NOT EXISTS admins (
   password_hash TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS site_admins (
+  site_admin_id TEXT PRIMARY KEY,
+  site_admin_name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS patients (
   patient_id TEXT PRIMARY KEY,
   patient_name TEXT NOT NULL,
