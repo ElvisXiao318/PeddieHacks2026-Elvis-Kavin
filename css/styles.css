@@ -1311,6 +1311,7 @@ a:hover {
 
 .facility-directory {
   position: relative;
+  align-self: start;
 }
 
 .facility-directory input[type="search"] {
