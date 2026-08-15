@@ -128,6 +128,9 @@ const DEMO_FACILITIES = [
 ];
 
 let selectedFacilityId = getStored('careconnect-facility', 'st-michaels');
+let mapScale = 1;
+let mapOffset = { x: 0, y: 0 };
+let mapDragState = null;
 
 function escapeHtml(value) {
   return String(value)
@@ -335,15 +338,23 @@ function renderSelectedFacility() {
       <h4>${escapeHtml(facility.name)}</h4>
       <p>${escapeHtml(facility.address)} · ${escapeHtml(facility.distance)}</p>
     </div>
-    <a class="btn btn-sm" href="tel:${facility.phone.replace(/\D/g, '')}">Call facility</a>
+    <div class="selected-facility-actions">
+      <a
+        class="btn btn-sm"
+        href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(facility.address)}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >Get directions</a>
+      <a class="btn btn-sm" href="tel:${facility.phone.replace(/\D/g, '')}">Call facility</a>
+    </div>
   `;
 }
 
 function renderFacilityMap() {
-  const el = document.getElementById('facility-map');
-  if (!el) return;
+  const canvas = document.getElementById('facility-map-canvas');
+  if (!canvas) return;
 
-  el.innerHTML = `
+  canvas.innerHTML = `
     <div class="map-road map-road-one"></div>
     <div class="map-road map-road-two"></div>
     <div class="map-road map-road-three"></div>
@@ -362,6 +373,122 @@ function renderFacilityMap() {
       `,
     ).join('')}
   `;
+  applyMapTransform();
+}
+
+function applyMapTransform() {
+  const canvas = document.getElementById('facility-map-canvas');
+  if (!canvas) return;
+
+  canvas.style.transform = `translate3d(${mapOffset.x}px, ${mapOffset.y}px, 0) scale(${mapScale})`;
+}
+
+function centerMapOnFacility(facilityId, zoomToSelection = true) {
+  const map = document.getElementById('facility-map');
+  const facility = DEMO_FACILITIES.find((item) => item.id === facilityId);
+  if (!map || !facility) return;
+
+  const width = map.clientWidth;
+  const height = map.clientHeight;
+  if (!width || !height) return;
+
+  if (zoomToSelection) {
+    mapScale = Math.max(mapScale, 1.25);
+  }
+
+  const facilityX = (facility.x / 100) * width;
+  const facilityY = (facility.y / 100) * height;
+  mapOffset = {
+    x: width / 2 - facilityX * mapScale,
+    y: height / 2 - facilityY * mapScale,
+  };
+  applyMapTransform();
+}
+
+function zoomMap(nextScale, focusX, focusY) {
+  const map = document.getElementById('facility-map');
+  if (!map) return;
+
+  const oldScale = mapScale;
+  mapScale = Math.min(3, Math.max(0.7, nextScale));
+  const x = focusX ?? map.clientWidth / 2;
+  const y = focusY ?? map.clientHeight / 2;
+
+  mapOffset = {
+    x: x - (x - mapOffset.x) * (mapScale / oldScale),
+    y: y - (y - mapOffset.y) * (mapScale / oldScale),
+  };
+  applyMapTransform();
+}
+
+function resetMap() {
+  mapScale = 1;
+  mapOffset = { x: 0, y: 0 };
+  applyMapTransform();
+}
+
+function initMapInteractions() {
+  const map = document.getElementById('facility-map');
+  const canvas = document.getElementById('facility-map-canvas');
+  if (!map || !canvas) return;
+
+  map.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('button, a')) return;
+
+    mapDragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: mapOffset.x,
+      originY: mapOffset.y,
+    };
+    map.classList.add('is-dragging');
+    map.setPointerCapture(event.pointerId);
+  });
+
+  map.addEventListener('pointermove', (event) => {
+    if (!mapDragState || mapDragState.pointerId !== event.pointerId) return;
+
+    mapOffset = {
+      x: mapDragState.originX + event.clientX - mapDragState.startX,
+      y: mapDragState.originY + event.clientY - mapDragState.startY,
+    };
+    applyMapTransform();
+  });
+
+  const endDrag = (event) => {
+    if (!mapDragState || mapDragState.pointerId !== event.pointerId) return;
+    map.classList.remove('is-dragging');
+    if (map.hasPointerCapture(event.pointerId)) {
+      map.releasePointerCapture(event.pointerId);
+    }
+    mapDragState = null;
+  };
+
+  map.addEventListener('pointerup', endDrag);
+  map.addEventListener('pointercancel', endDrag);
+
+  map.addEventListener(
+    'wheel',
+    (event) => {
+      event.preventDefault();
+      const rect = map.getBoundingClientRect();
+      const focusX = event.clientX - rect.left;
+      const focusY = event.clientY - rect.top;
+      zoomMap(mapScale + (event.deltaY < 0 ? 0.15 : -0.15), focusX, focusY);
+    },
+    { passive: false },
+  );
+
+  document.getElementById('map-zoom-in')?.addEventListener('click', () => {
+    zoomMap(mapScale + 0.25);
+  });
+
+  document.getElementById('map-zoom-out')?.addEventListener('click', () => {
+    zoomMap(mapScale - 0.25);
+  });
+
+  document.getElementById('map-reset')?.addEventListener('click', resetMap);
 }
 
 function renderFacilityList(filter = '') {
@@ -402,6 +529,7 @@ function selectFacility(facilityId) {
   renderSelectedFacility();
   renderFacilityMap();
   renderFacilityList(document.getElementById('facility-search')?.value || '');
+  centerMapOnFacility(facilityId);
 }
 
 function initFacilitySelector() {
@@ -412,6 +540,8 @@ function initFacilitySelector() {
   renderSelectedFacility();
   renderFacilityMap();
   renderFacilityList();
+  initMapInteractions();
+  centerMapOnFacility(selectedFacilityId, false);
 
   document.getElementById('facility-search')?.addEventListener('input', (event) => {
     renderFacilityList(event.target.value);

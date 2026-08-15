@@ -30,11 +30,14 @@ Then visit `http://localhost:3000`.
 - **Text-to-speech** (browser-dependent)
 
 ### Patient Portal
-- Future appointments (sample data; full calendar is roadmap Step 2)
-- Symptom tracking with manual text entry
-- Missed communications log
-- Unresolved cases with clear status indicators
-- Contact care team (message + callback request)
+- Overview tab with upcoming appointments first
+- Personal information card with blood type, age, sex, and health card number
+- Main care facility selector with a draggable and zoomable map
+- Hospital selection that centers the chosen facility on the map
+- Google Maps directions link for the selected facility
+- Searchable nearby facility list
+- Symptoms / Issues tab with Pending and Resolved status views
+- Appointment booking with date, time, reason, and severity level
 
 ### Provider Portal
 - Comprehensive patient list
