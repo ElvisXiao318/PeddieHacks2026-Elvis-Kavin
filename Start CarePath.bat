@@ -13,11 +13,9 @@ if %errorlevel%==0 (
     goto no_python
   )
 )
-
 goto :eof
-
 :no_python
-  echo.
-  echo Python 3 is needed to start CareConnect.
-  echo Install it from https://www.python.org/downloads/
-  pause
+echo.
+echo Python 3 is needed to start CarePath.
+echo Install it from https://www.python.org/downloads/
+pause

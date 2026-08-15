@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: carepath
+    runtime: python
+    buildCommand: ""
+    startCommand: python server.py
+    envVars:
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: carepath-data
+      mountPath: /var/data
+      sizeGB: 1

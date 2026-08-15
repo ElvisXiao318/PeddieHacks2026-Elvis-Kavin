@@ -1,10 +1,10 @@
-# CareConnect Demo
+# CarePath Demo
 
-Responsive demo website for **CareConnect** — the organization hub for Canadian hospitals.
+Responsive demo website for **CarePath** — the organization hub for Canadian hospitals.
 
 ## Quick Start
 
-The easiest option is to double-click **Start CareConnect.bat**, then open `http://localhost:8000`.
+The easiest option is to double-click **Start CarePath.bat**, then open `http://localhost:8000`.
 
 Or install Python 3 and start the app from this folder:
 
@@ -17,13 +17,13 @@ Then visit `http://localhost:8000`. Do not open the HTML files directly: account
 ## Demo Login
 
 1. Click **Create Patient Account** to add a stored patient account. The form collects name, age (via date of birth), gender, health-card number, phone, and hospital.
-2. To log in as seeded staff, use password `CareConnect2026!`:
-   - Provider: `sarah.chen@careconnect.demo`
-   - Admin: `admin@careconnect.demo`
+2. To log in as seeded staff, use password `CarePath2026!`:
+   - Provider: `sarah.chen@carepath.demo`
+   - Admin: `admin@carepath.demo`
 
 ## Data storage
 
-`server.py` creates `careconnect.db` using `schema.sql`. It contains interconnected `hospitals`, `doctors`, `specialists`, `admins`, and `patients` tables. Hospital and staff records are safely seeded on first run; newly registered patient accounts persist in the database.
+`server.py` creates `carepath.db` using `schema.sql`. It contains interconnected `hospitals`, `doctors`, `specialists`, `admins`, and `patients` tables. Hospital and staff records are safely seeded on first run; newly registered patient accounts persist in the database.
 
 The hospital table imports the supplied Open Database of Healthcare Facilities CSV (`C:\Users\hp\Downloads\odhf_v1.1 - odhf_v1.1.csv`) when the server starts. To make the project portable, copy that file beside `server.py` and rename it `hospital_directory.csv`; it is preferred automatically. The original directory includes 3,367 facilities plus its header row.
 

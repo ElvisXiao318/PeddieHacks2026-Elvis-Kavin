@@ -1,4 +1,4 @@
-/** CareConnect account login and patient registration. Requires server.py. */
+/** CarePath account login and patient registration. Requires server.py. */
 function setError(id, message) { const el = document.getElementById(id); if (el) { el.textContent = message; el.classList.toggle('visible', Boolean(message)); } }
 function openModal(id, focusId) { document.getElementById(id)?.classList.add('open'); document.getElementById(focusId)?.focus(); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); setError(id === 'login-modal' ? 'login-error' : 'signup-error', ''); }
@@ -7,7 +7,7 @@ async function api(path, body) { const response = await fetch(path, { method: 'P
 async function handleLogin(event) {
   event.preventDefault(); const email = document.getElementById('login-email').value.trim(); const password = document.getElementById('login-password').value; const role = document.getElementById('login-role').value;
   if (!email || !password || !role) return setError('login-error', 'Please fill in all fields.');
-  try { const account = await api('/api/login', { email, password, role }); setStored(STORAGE_KEYS.loggedIn, 'true'); setStored(STORAGE_KEYS.role, account.role); setStored(STORAGE_KEYS.userId, account.userId); setStored(STORAGE_KEYS.userName, account.name); setStored(STORAGE_KEYS.sessionToken, account.sessionToken); redirectFor(account.role); } catch (error) { setError('login-error', `${error.message} Start the CareConnect server before signing in.`); }
+  try { const account = await api('/api/login', { email, password, role }); setStored(STORAGE_KEYS.loggedIn, 'true'); setStored(STORAGE_KEYS.role, account.role); setStored(STORAGE_KEYS.userId, account.userId); setStored(STORAGE_KEYS.userName, account.name); setStored(STORAGE_KEYS.sessionToken, account.sessionToken); redirectFor(account.role); } catch (error) { setError('login-error', `${error.message} Start the CarePath server before signing in.`); }
 }
 async function loadHospitals() {
   const select = document.getElementById('signup-hospital'); if (!select) return;
@@ -29,7 +29,7 @@ async function loadDoctors() {
 }
 async function handleSignup(event) {
   event.preventDefault(); const value = (id) => document.getElementById(id).value.trim();
-  try { const account = await api('/api/signup', { name: value('signup-name'), email: value('signup-email'), password: document.getElementById('signup-password').value, dateOfBirth: value('signup-dob'), gender: value('signup-gender'), healthCard: value('signup-health-card'), phone: value('signup-phone'), hospitalId: value('signup-hospital'), doctorId: value('signup-doctor'), emergencyName: value('signup-emergency-name'), emergencyRelationship: value('signup-emergency-relationship'), emergencyPhone: value('signup-emergency-phone') }); setStored(STORAGE_KEYS.loggedIn, 'true'); setStored(STORAGE_KEYS.role, account.role); setStored(STORAGE_KEYS.userId, account.patientId); setStored(STORAGE_KEYS.userName, account.name); redirectFor('patient'); } catch (error) { setError('signup-error', `${error.message} Start the CareConnect server before creating an account.`); }
+  try { const account = await api('/api/signup', { name: value('signup-name'), email: value('signup-email'), password: document.getElementById('signup-password').value, dateOfBirth: value('signup-dob'), gender: value('signup-gender'), healthCard: value('signup-health-card'), phone: value('signup-phone'), hospitalId: value('signup-hospital'), doctorId: value('signup-doctor'), emergencyName: value('signup-emergency-name'), emergencyRelationship: value('signup-emergency-relationship'), emergencyPhone: value('signup-emergency-phone') }); setStored(STORAGE_KEYS.loggedIn, 'true'); setStored(STORAGE_KEYS.role, account.role); setStored(STORAGE_KEYS.userId, account.patientId); setStored(STORAGE_KEYS.userName, account.name); redirectFor('patient'); } catch (error) { setError('signup-error', `${error.message} Start the CarePath server before creating an account.`); }
 }
 document.addEventListener('DOMContentLoaded', () => {
   ['open-login', 'hero-login'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => openModal('login-modal', 'login-email')));
