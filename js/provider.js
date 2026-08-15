@@ -22,7 +22,7 @@ function currentProvider() {
     id: PROVIDER_ID,
     name: getStored(STORAGE_KEYS.userName, 'Provider') || 'Provider',
     specialty: '',
-    facilityId: '',
+    facilityId: getStored(STORAGE_KEYS.hospitalId, ''),
     phone: '',
   };
 }

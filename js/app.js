@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   loggedIn: 'carepath-logged-in',
   userId: 'carepath-user-id',
   userName: 'carepath-user-name',
+  hospitalId: 'carepath-hospital-id',
   sessionToken: 'carepath-session-token',
 };
 
@@ -132,6 +133,7 @@ async function logout() {
   } catch { /* Local sign-out still completes if the server is unavailable. */ }
   setStored(STORAGE_KEYS.loggedIn, 'false');
   setStored(STORAGE_KEYS.role, '');
+  setStored(STORAGE_KEYS.hospitalId, '');
   setStored(STORAGE_KEYS.sessionToken, '');
   window.location.href = 'index.html';
 }

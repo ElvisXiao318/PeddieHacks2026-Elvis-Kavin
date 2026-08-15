@@ -576,8 +576,11 @@ class Handler(SimpleHTTPRequestHandler):
         if not row: return self.send_json(401, {"error": "Email, password, or role is incorrect."})
         identifier = row["patient_id"] if role == "patient" else row["doctor_id"] if role == "provider" else row["admin_id"] if role == "admin" else row["site_admin_id"] if role == "site-admin" else row["specialist_id"]
         session_token = secrets.token_urlsafe(32)
-        SESSIONS[session_token] = {"role": "provider" if role == "specialist" else role, "userId": identifier}
-        self.send_json(200, {"role": "provider" if role == "specialist" else role, "userId": identifier, "name": row[1], "sessionToken": session_token})
+        hospital_id = row["hospital_id"] if "hospital_id" in row.keys() else None
+        SESSIONS[session_token] = {"role": "provider" if role == "specialist" else role,
+            "userId": identifier, "hospitalId": hospital_id}
+        self.send_json(200, {"role": "provider" if role == "specialist" else role, "userId": identifier,
+            "name": row[1], "hospitalId": hospital_id, "sessionToken": session_token})
 
     def provision(self, data):
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")

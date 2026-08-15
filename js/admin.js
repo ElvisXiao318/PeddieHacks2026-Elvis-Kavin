@@ -4,8 +4,8 @@
 
 requireAuth('admin');
 
-const hospitalId = ADMIN_HOSPITAL_ID;
-const hospital = getFacility(hospitalId);
+/* The hospital this administrator belongs to, stored at login. */
+const hospitalId = getStored(STORAGE_KEYS.hospitalId, '') || ADMIN_HOSPITAL_ID;
 
 let selectedDoctorId = null;
 let selectedPatientId = null;
@@ -437,10 +437,26 @@ function initClientList() {
   });
 }
 
+/** Facilities without patients are absent from the dashboard feed, so fall back to the hospital directory. */
+async function resolveHospital() {
+  const facility = getFacility(hospitalId);
+  if (facility.name !== 'Facility not on record') return facility;
+  try {
+    const hospitals = await fetch('/api/hospitals').then((response) => response.json());
+    const match = hospitals.find((item) => item.id === hospitalId);
+    return match ? { ...facility, name: match.name, address: match.address || facility.address } : facility;
+  } catch {
+    return facility;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await CAREPATH_DATA_READY;
+  const hospital = await resolveHospital();
   const title = document.getElementById('admin-hospital-name');
   if (title) title.textContent = hospital.name;
+  const subtitle = document.getElementById('admin-hospital-subtitle');
+  if (subtitle && hospital.address !== 'Address unavailable') subtitle.textContent = hospital.address;
 
   initPanels();
   initScheduleViews();
