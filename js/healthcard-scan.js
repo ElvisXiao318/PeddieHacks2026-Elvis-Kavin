@@ -1,15 +1,18 @@
 /**
- * CarePath — Scan Health Card
+ * CarePath health card scanner.
  * Reads a photo of a Canadian provincial health card entirely in the browser
- * (via Tesseract.js OCR) and auto-fills the sign-up form's name, date of
- * birth, gender, and health card number fields. Nothing is uploaded — the
- * image never leaves the device. Auto-filled values are always editable and
- * the user is asked to double-check them before submitting.
+ * using Tesseract.js OCR and auto fills the sign up form's name, date of
+ * birth, gender, and health card number fields. Nothing is uploaded and the
+ * image never leaves the device. Auto filled values are always editable and
+ * the user is asked to double check them before submitting.
  */
 (function () {
+  // Month name abbreviations mapped to their two digit numbers.
   const MONTHS = { JAN: '01', FEB: '02', MAR: '03', APR: '04', MAY: '05', JUN: '06', JUL: '07', AUG: '08', SEP: '09', OCT: '10', NOV: '11', DEC: '12' };
+  // Words that appear as printed labels on cards, so they are never a person's name.
   const LABEL_WORDS = /^(HEALTH|CARD|SANTE|SANTÉ|CANADA|ONTARIO|QUEBEC|QUÉBEC|ALBERTA|MANITOBA|CARTE|VALID|EXPIRY|EXPIRES|EXPIRE|ISSUED|SEX|SEXE|DOB|BIRTH|NAISSANCE|NUMBER|NUMÉRO|NO|GOVERNMENT|MINISTRY|INSURANCE|PLAN|PROVINCE)\.?$/i;
 
+  // Shows a status message under the scan area, with an optional busy spinner.
   function setStatus(message, state) {
     const el = document.getElementById('scan-status');
     if (!el) return;
@@ -17,6 +20,8 @@
     el.innerHTML = state === 'busy' ? `<span class="scan-spinner" aria-hidden="true"></span>${message}` : message;
   }
 
+  // Puts a value into a form field and plays a short highlight animation.
+  // Returns true when the field was actually filled.
   function markAutofilled(id, value) {
     const el = document.getElementById(id);
     if (!el || !value) return false;
@@ -27,7 +32,7 @@
     return true;
   }
 
-  /** Extract a plausible 10–12 digit Canadian health card number. */
+  // Finds a likely 10 to 12 digit Canadian health card number in the text.
   function findHealthCardNumber(text) {
     const candidates = text.match(/\d[\d\s-]{8,15}\d/g) || [];
     for (const raw of candidates) {
@@ -41,7 +46,8 @@
     return null;
   }
 
-  /** Extract a date of birth in YYYY-MM-DD form, for the <input type=date>. */
+  // Finds a date of birth and returns it as YYYY-MM-DD for the date input.
+  // Tries three formats: digits only, month names, and day/month/year.
   function findDateOfBirth(text) {
     const isoLike = text.match(/\b(19|20)\d{2}[\s\/-]?(0[1-9]|1[0-2])[\s\/-]?(0[1-9]|[12]\d|3[01])\b/);
     if (isoLike) {
@@ -64,7 +70,7 @@
     return null;
   }
 
-  /** Extract M/F sex marker mapped to the sign-up form's gender options. */
+  // Finds the M or F sex marker and maps it to the form's gender options.
   function findGender(text) {
     const near = text.match(/SEX[A-Z]?\s*[:\-]?\s*([MF])\b/i) || text.match(/\b(SEX|SEXE)\b[^A-Z0-9]{0,4}([MF])\b/i);
     const letter = (near && (near[2] || near[1]))?.toString().toUpperCase();
@@ -73,7 +79,7 @@
     return null;
   }
 
-  /** Best-effort name guess from two clean, all-letters, non-label lines. */
+  // Makes a best effort name guess from two clean, all letters, non label lines.
   function findName(rawText) {
     const lines = rawText
       .split('\n')
@@ -88,6 +94,7 @@
     return titleCase(`${second} ${first}`);
   }
 
+  // Converts ALL CAPS text into normal Title Case.
   function titleCase(str) {
     return str
       .toLowerCase()
@@ -96,6 +103,8 @@
       .trim();
   }
 
+  // Runs the whole scan: shows a preview of the photo, reads the text with
+  // OCR, then fills in every field it can find and reports the result.
   async function handleFile(file) {
     if (!file) return;
 
@@ -154,6 +163,8 @@
     }
   }
 
+  // Wires up the scan area: clicking opens the file picker, and images can
+  // also be dragged and dropped onto it.
   document.addEventListener('DOMContentLoaded', () => {
     const dropzone = document.getElementById('scan-dropzone');
     const fileInput = document.getElementById('scan-file-input');

@@ -1,25 +1,29 @@
 /**
- * CarePath — Site admin dashboard
+ * CarePath site admin dashboard.
  *
  * The site admin is the only role that can add or remove hospitals,
  * doctors, specialists, and hospital admins. None of those roles can
  * sign themselves up.
  */
 
+// Only logged in site admins may view this page.
 requireAuth('site-admin');
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+/* ---------- Helpers ---------- */
 
+// Escapes special HTML characters so user text cannot break the page.
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
   ));
 }
 
+// Builds the Authorization header with the saved session token.
 function authHeader() {
   return { Authorization: `Bearer ${getStored(STORAGE_KEYS.sessionToken, '')}` };
 }
 
+// Shows a success or error message in the element with the given id.
 function setMessage(id, text, success = false) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -28,8 +32,9 @@ function setMessage(id, text, success = false) {
   el.style.color = success ? 'var(--success)' : 'var(--danger)';
 }
 
-// ─── Panel navigation ─────────────────────────────────────────────────────────
+/* ---------- Panel navigation ---------- */
 
+// Switches which dashboard panel is visible and refreshes its data.
 function showPanel(panelId) {
   document.querySelectorAll('.sidebar nav button[data-panel]').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-panel') === panelId);
@@ -41,23 +46,28 @@ function showPanel(panelId) {
   if (panelId === 'directory') refreshDirectory();
 }
 
+// Wires up the sidebar navigation buttons.
 function initPanels() {
   document.querySelectorAll('.sidebar nav button[data-panel]').forEach((btn) => {
     btn.addEventListener('click', () => showPanel(btn.getAttribute('data-panel')));
   });
 }
 
-// ─── Searchable hospital picker ───────────────────────────────────────────────
+/* ---------- Searchable hospital picker ---------- */
 
+// The full hospital list is large, so the picker shows at most this many results.
 const HOSPITAL_RESULT_LIMIT = 50;
+// Hospitals loaded from the server, shared by every picker on the page.
 let hospitalsCache = [];
 
+// Fetches the hospital list from the server.
 async function fetchHospitals() {
   const response = await fetch('/api/hospitals');
   if (!response.ok) throw new Error('Could not load hospitals.');
   return response.json();
 }
 
+// Refreshes the shared hospital cache, leaving it empty if the request fails.
 async function loadHospitals() {
   try {
     hospitalsCache = await fetchHospitals();
@@ -66,6 +76,8 @@ async function loadHospitals() {
   }
 }
 
+// Draws the hospitals that match the search text into the dropdown list,
+// with a hint when there are more matches than can be shown.
 function renderHospitalOptions(listEl, query) {
   const q = query.trim().toLowerCase();
   const matches = hospitalsCache.filter((h) =>
@@ -98,6 +110,9 @@ function renderHospitalOptions(listEl, query) {
       : '');
 }
 
+// Sets up one searchable hospital picker. The visible input holds the typed
+// text, the hidden input holds the chosen hospital id, and the dropdown
+// opens on focus, filters as the user types, and closes on outside clicks.
 function initHospitalPicker(searchId, listId, valueId, onSelect) {
   const search = document.getElementById(searchId);
   const list = document.getElementById(listId);
@@ -111,6 +126,7 @@ function initHospitalPicker(searchId, listId, valueId, onSelect) {
 
   search.addEventListener('focus', open);
   search.addEventListener('input', () => {
+    // Typing again clears any hospital that was already chosen.
     if (value.value) {
       value.value = '';
       onSelect?.('');
@@ -134,13 +150,16 @@ function initHospitalPicker(searchId, listId, valueId, onSelect) {
   });
 }
 
-// ─── Add record form ──────────────────────────────────────────────────────────
+/* ---------- Add record form ---------- */
 
+// Sets up the add record form: shows the right fields for the chosen record
+// type, validates the hospital choice, and submits the record to the server.
 function initProvisionForm() {
   const typeSelect = document.getElementById('site-admin-type');
   const staffFields = document.querySelectorAll('.provision-staff-field');
   const hospitalOnlyFields = document.querySelectorAll('.provision-hospital-only');
 
+  // Staff records need account fields, hospital records need address fields.
   function updateFields() {
     const isHospital = typeSelect.value === 'hospital';
     staffFields.forEach((f) => (f.style.display = isHospital ? 'none' : ''));
@@ -199,8 +218,9 @@ function initProvisionForm() {
   });
 }
 
-// ─── Hospitals list panel ─────────────────────────────────────────────────────
+/* ---------- Hospitals list panel ---------- */
 
+// Draws the list of every hospital with a remove button for each.
 async function loadHospitalsList() {
   const el = document.getElementById('hospitals-list');
   if (!el) return;
@@ -240,8 +260,9 @@ async function loadHospitalsList() {
   }
 }
 
-// ─── Staff directory panel ────────────────────────────────────────────────────
+/* ---------- Staff directory panel ---------- */
 
+// Builds one staff directory row with the person's role and a remove button.
 function staffRowMarkup(person, roleLabel, type) {
   return `
     <article class="appointment-item">
@@ -264,6 +285,8 @@ function staffRowMarkup(person, roleLabel, type) {
   `;
 }
 
+// Loads and draws the doctors, specialists, and admins at the selected
+// hospital. The admins request needs the site admin session token.
 async function refreshDirectory() {
   const hospitalId = document.getElementById('directory-hospital')?.value;
   const doctorsEl = document.getElementById('directory-doctors');
@@ -307,13 +330,16 @@ async function refreshDirectory() {
   }
 }
 
+// Sets up the staff directory's hospital picker.
 async function initDirectory() {
   await loadHospitals();
   initHospitalPicker('directory-hospital-search', 'directory-hospital-list', 'directory-hospital', refreshDirectory);
 }
 
-// ─── Remove records (delegated click handler) ─────────────────────────────────
+/* ---------- Remove records (delegated click handler) ---------- */
 
+// Asks for confirmation, deletes the record on the server, then refreshes
+// whichever panel is open plus the hospital cache.
 async function handleRemove(type, id, name) {
   if (!confirm(`Remove ${name}? This cannot be undone.`)) return;
   try {
@@ -334,14 +360,16 @@ async function handleRemove(type, id, name) {
   }
 }
 
+// One shared click handler catches every remove button on the page.
 document.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-remove-type]');
   if (!btn) return;
   handleRemove(btn.dataset.removeType, btn.dataset.removeId, btn.dataset.removeName);
 });
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
+/* ---------- Boot ---------- */
 
+// Starts the page: shows the admin's name and wires up every panel.
 document.addEventListener('DOMContentLoaded', () => {
   const name = getStored(STORAGE_KEYS.userName, '');
   const heading = document.getElementById('site-admin-name');

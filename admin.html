@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Hospital admin dashboard: schedules, booking, and the hospital's client records. -->
 <html lang="en-CA" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- Top bar with the theme toggle and logout button. -->
   <header class="site-header">
     <div class="container header-inner">
       <a href="index.html" class="logo">
@@ -22,6 +24,7 @@
   </header>
 
   <div class="container dashboard-layout">
+    <!-- Sidebar buttons that switch between the panels below. -->
     <aside class="sidebar">
       <nav aria-label="Admin navigation">
         <button type="button" class="active" data-panel="schedule">Schedule</button>
@@ -41,7 +44,7 @@
         <span class="secure-badge">Secure admin view</span>
       </div>
 
-      <!-- Schedule -->
+      <!-- Schedule panel: per doctor and hospital-wide appointment views. -->
       <section id="panel-schedule" class="panel active">
         <div class="panel-heading">
           <div>
@@ -74,7 +77,7 @@
           <div class="list-card appointment-list" id="hospital-schedule-list" aria-label="Hospital-wide appointment schedule"></div>
         </div>
       </section>
-      <!-- Book an Appointment -->
+      <!-- Booking panel: form to schedule a client with a doctor here. -->
       <section id="panel-book" class="panel">
         <div class="panel-heading">
           <div>
@@ -136,7 +139,7 @@
         </div>
       </section>
 
-      <!-- Clients -->
+      <!-- Clients panel: the hospital roster and the client detail view. -->
       <section id="panel-clients" class="panel">
         <div id="admin-client-list-view">
           <div class="panel-heading">
@@ -151,6 +154,7 @@
           <div class="list-card client-list" id="admin-client-list" aria-label="Hospital client list"></div>
         </div>
 
+        <!-- Detail view for one client, hidden until a client is chosen. -->
         <div id="admin-client-detail-view" class="client-detail-view" hidden>
           <button type="button" class="btn btn-sm back-btn" id="admin-back-to-clients">← Back to clients</button>
 

@@ -1,4 +1,4 @@
-/* CarePath — Responsive styles with theme & accessibility support */
+/* CarePath shared styles for every page, with light and dark themes. */
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -1010,6 +1010,8 @@ a:hover {
   padding-bottom: 0;
 }
 
+/* ---------- Appointment rows ---------- */
+
 .appointment-list {
   margin-bottom: 1.25rem;
 }
@@ -1091,6 +1093,8 @@ a:hover {
   border-bottom: 1px solid var(--border);
 }
 
+/* ---------- Severity badges ---------- */
+
 .severity-badge {
   display: inline-flex;
   align-items: center;
@@ -1114,6 +1118,8 @@ a:hover {
   background: color-mix(in srgb, var(--danger) 14%, transparent);
   color: var(--danger);
 }
+
+/* ---------- Care facility map and search ---------- */
 
 .facility-card {
   margin-bottom: 1.25rem;
@@ -1309,6 +1315,9 @@ a:hover {
   font-weight: 600;
 }
 
+/* Anchor for the dropdown list. align-self keeps this box the height of
+   its input instead of stretching to the tall map column, so the list
+   opens directly under the search field. */
 .facility-directory {
   position: relative;
   align-self: start;
@@ -1319,6 +1328,7 @@ a:hover {
   margin-bottom: 0;
 }
 
+/* The dropdown of search results, hidden until it gets the open class. */
 .facility-list {
   position: absolute;
   z-index: 20;
@@ -1437,6 +1447,8 @@ a:hover {
   font-weight: 600;
   white-space: nowrap;
 }
+
+/* ---------- Status tabs (pending / resolved) ---------- */
 
 .status-tabs {
   display: inline-flex;

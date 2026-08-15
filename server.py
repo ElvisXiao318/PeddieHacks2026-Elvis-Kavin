@@ -1,4 +1,8 @@
-"""CarePath demo server. Run: python server.py, then open http://localhost:8000."""
+"""CarePath demo server.
+
+Run: python server.py, then open http://localhost:8000.
+Serves the static site files and a small JSON API backed by SQLite.
+"""
 import csv
 import hashlib
 import json
@@ -11,11 +15,15 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+# Where the site files live and where the database is stored. The extra
+# logic supports running from a PyInstaller bundle as well as from source.
 RESOURCE_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
 DATA_ROOT = Path(sys.executable).parent if getattr(sys, "frozen", False) else RESOURCE_ROOT
 DB_PATH = DATA_ROOT / "carepath.db"
+# Active login sessions, mapping a token to the signed in user's details.
 SESSIONS = {}
 
+# The core Toronto hospitals seeded into a fresh database.
 HOSPITALS = [
     ("st-michaels", "St. Michael's Hospital", "30 Bond Street, Toronto, ON", "(416) 360-4000"),
     ("toronto-general", "Toronto General Hospital", "200 Elizabeth Street, Toronto, ON", "(416) 340-3111"),
@@ -23,6 +31,7 @@ HOSPITALS = [
     ("mount-sinai", "Mount Sinai Hospital", "600 University Avenue, Toronto, ON", "(416) 596-4200"),
 ]
 
+# Optional CSV files that add thousands more real facilities when present.
 DIRECTORY_PATHS = [
     DATA_ROOT / "hospital_directory.csv",
     Path(r"C:\Users\hp\Downloads\odhf_v1.1 - odhf_v1.1.csv"),
@@ -43,6 +52,7 @@ def hospital_directory_rows():
             yield (f"odhf-{row['index']}", name, address or None, None)
 
 def hash_password(password):
+    """Hashes a password with SHA-256 before it is stored or compared."""
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 # Simulated roster used to fill each doctor's client list.
@@ -90,6 +100,7 @@ SIMULATED_PATIENT_POOL = [
      [("COPD exacerbation", "high"), ("Persistent morning cough", "medium")]),
 ]
 
+# Times and visit types cycled through when seeding simulated appointments.
 APPOINTMENT_TIMES = ["09:00 AM", "10:30 AM", "11:15 AM", "01:45 PM", "03:30 PM"]
 APPOINTMENT_TYPES = ["Follow-up", "Consultation", "Lab review", "Check-up", "Urgent visit"]
 
@@ -145,6 +156,7 @@ def age_from_date_of_birth(date_of_birth):
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
 def db():
+    """Opens a database connection with rows that act like dictionaries."""
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
@@ -157,6 +169,7 @@ def apply_migrations(connection):
         connection.execute("ALTER TABLE patients ADD COLUMN blood_type TEXT")
 
 def initialise_database():
+    """Creates the tables and seeds hospitals, staff, demo accounts, and patients."""
     connection = db()
     connection.executescript((RESOURCE_ROOT / "schema.sql").read_text(encoding="utf-8"))
     apply_migrations(connection)
@@ -269,10 +282,13 @@ def initialise_database():
     connection.close()
 
 class Handler(SimpleHTTPRequestHandler):
+    """Serves the static site files and handles every /api request."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(RESOURCE_ROOT), **kwargs)
 
     def send_json(self, status, payload):
+        """Sends a JSON response with the given HTTP status code."""
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
@@ -281,16 +297,20 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def read_json(self):
+        """Reads and parses the JSON body of the current request."""
         size = int(self.headers.get("Content-Length", 0))
         return json.loads(self.rfile.read(size).decode("utf-8"))
 
     def do_GET(self):
+        """Routes GET requests: API lookups first, then static files."""
         parsed_url = urlparse(self.path)
+        # Every hospital, used by the searchable hospital pickers.
         if parsed_url.path == "/api/hospitals":
             connection = db()
             rows = [dict(row) for row in connection.execute("SELECT hospital_id AS id, hospital_name AS name, address FROM hospitals ORDER BY hospital_name")]
             connection.close()
             return self.send_json(200, rows)
+        # Doctors at one hospital.
         if parsed_url.path == "/api/doctors":
             hospital_id = parse_qs(parsed_url.query).get("hospitalId", [""])[0]
             connection = db()
@@ -298,6 +318,7 @@ class Handler(SimpleHTTPRequestHandler):
                 specialty, email FROM doctors WHERE hospital_id = ? ORDER BY doctor_name""", (hospital_id,))]
             connection.close()
             return self.send_json(200, rows)
+        # Specialists at one hospital.
         if parsed_url.path == "/api/specialists":
             hospital_id = parse_qs(parsed_url.query).get("hospitalId", [""])[0]
             connection = db()
@@ -305,6 +326,7 @@ class Handler(SimpleHTTPRequestHandler):
                 specialty_type AS specialty, email FROM specialists WHERE hospital_id = ? ORDER BY specialist_name""", (hospital_id,))]
             connection.close()
             return self.send_json(200, rows)
+        # Hospital admins at one hospital. Only the site admin may view these.
         if parsed_url.path == "/api/admins":
             token = self.headers.get("Authorization", "").removeprefix("Bearer ")
             if SESSIONS.get(token, {}).get("role") != "site-admin":
@@ -315,6 +337,8 @@ class Handler(SimpleHTTPRequestHandler):
                 email FROM admins WHERE hospital_id = ? ORDER BY admin_name""", (hospital_id,))]
             connection.close()
             return self.send_json(200, rows)
+        # Everything the dashboards need in one call: patients with their
+        # issues and contacts, plus doctors, specialists, and hospitals.
         if self.path == "/api/dashboard-data":
             connection = db()
             patients = [dict(row) for row in connection.execute("""SELECT p.patient_id AS id, p.patient_name AS name,
@@ -351,6 +375,7 @@ class Handler(SimpleHTTPRequestHandler):
                     "emergencyContacts": contacts_by_patient.get(patient["id"], [])})
             return self.send_json(200, {"patients": patients, "doctors": doctors,
                 "specialists": specialists, "hospitals": hospitals})
+        # One patient's appointments. Only that patient may view them.
         if parsed_url.path.startswith("/api/patients/") and parsed_url.path.endswith("/appointments"):
             patient_id = parsed_url.path.split("/")[-2]
             if not self.authorize_patient(patient_id):
@@ -362,6 +387,7 @@ class Handler(SimpleHTTPRequestHandler):
                 WHERE a.patient_id = ? ORDER BY a.appointment_date, a.appointment_time""", (patient_id,))]
             connection.close()
             return self.send_json(200, rows)
+        # Every appointment, for staff schedule views.
         if parsed_url.path == "/api/appointments":
             token = self.headers.get("Authorization", "").removeprefix("Bearer ")
             session = SESSIONS.get(token, {})
@@ -375,6 +401,7 @@ class Handler(SimpleHTTPRequestHandler):
                 JOIN doctors d ON d.doctor_id = a.doctor_id ORDER BY a.appointment_date, a.appointment_time""")]
             connection.close()
             return self.send_json(200, rows)
+        # One patient's full profile. Only that patient may view it.
         if urlparse(self.path).path.startswith("/api/patients/"):
             patient_id = urlparse(self.path).path.rsplit("/", 1)[-1]
             if not self.authorize_patient(patient_id):
@@ -396,9 +423,11 @@ class Handler(SimpleHTTPRequestHandler):
                 frequency FROM medications WHERE patient_id = ? ORDER BY medication_name""", (patient_id,))]
             connection.close()
             return self.send_json(200, profile)
+        # Anything else is a static file request.
         return super().do_GET()
 
     def do_POST(self):
+        """Routes POST requests to the matching API handler."""
         try:
             data = self.read_json()
             if self.path == "/api/signup": return self.signup(data)
@@ -413,6 +442,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(400, {"error": "Invalid request."})
 
     def do_DELETE(self):
+        """Deletes a hospital, doctor, specialist, or admin. Site admin only."""
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")
         session_role = SESSIONS.get(token, {}).get("role")
         if session_role != "site-admin":
@@ -446,16 +476,19 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(404, {"error": "Unknown endpoint."})
 
     def authorize_patient(self, patient_id):
+        """Checks that the request comes from the patient with this id."""
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")
         session = SESSIONS.get(token, {})
         return session.get("role") == "patient" and session.get("userId") == patient_id
 
     def logout(self):
+        """Forgets the caller's session token."""
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")
         SESSIONS.pop(token, None)
         self.send_json(200, {"message": "Signed out."})
 
     def create_symptom(self, data):
+        """Logs a new symptom for a patient. Allowed for that patient or staff."""
         patient_id = data.get("patientId", "").strip()
         text = data.get("text", "").strip()
         severity = data.get("severity", "").strip()
@@ -479,6 +512,7 @@ class Handler(SimpleHTTPRequestHandler):
             connection.close()
 
     def resolve_symptom(self, data):
+        """Marks a symptom as resolved. Staff only."""
         symptom_id = data.get("symptomId", "").strip()
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")
         session = SESSIONS.get(token, {})
@@ -498,6 +532,7 @@ class Handler(SimpleHTTPRequestHandler):
             connection.close()
 
     def create_appointment(self, data):
+        """Books an appointment after checking the caller, fields, and doctor."""
         patient_id = data.get("patientId", "").strip()
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")
         session = SESSIONS.get(token, {})
@@ -537,6 +572,7 @@ class Handler(SimpleHTTPRequestHandler):
             connection.close()
 
     def signup(self, data):
+        """Creates a new patient account with their emergency contact."""
         required = ["name", "email", "password", "dateOfBirth", "gender", "healthCard", "hospitalId", "doctorId", "emergencyName", "emergencyRelationship", "emergencyPhone"]
         if any(not str(data.get(field, "")).strip() for field in required):
             return self.send_json(400, {"error": "Please complete every required field."})
@@ -568,6 +604,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(400, {"error": str(error)})
 
     def login(self, data):
+        """Checks the email, password, and role, then starts a session."""
         role = data.get("role"); table = {"patient": "patients", "provider": "doctors", "admin": "admins", "specialist": "specialists", "site-admin": "site_admins"}.get(role)
         if not table: return self.send_json(400, {"error": "Select a valid role."})
         connection = db()
@@ -583,6 +620,7 @@ class Handler(SimpleHTTPRequestHandler):
             "name": row[1], "hospitalId": hospital_id, "sessionToken": session_token})
 
     def provision(self, data):
+        """Adds a hospital, doctor, specialist, or admin. Site admin only."""
         token = self.headers.get("Authorization", "").removeprefix("Bearer ")
         session_role = SESSIONS.get(token, {}).get("role")
         if session_role != "site-admin":
@@ -615,6 +653,7 @@ class Handler(SimpleHTTPRequestHandler):
         finally:
             connection.close()
 
+# Prepare the database, then serve the app until stopped.
 if __name__ == "__main__":
     initialise_database()
     print("CarePath running at http://localhost:8000")

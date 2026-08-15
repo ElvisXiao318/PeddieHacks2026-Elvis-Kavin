@@ -1,7 +1,10 @@
 /**
- * CarePath — Shared demo data
+ * CarePath shared demo data and small data helpers.
+ * The demo records below are placeholders that get replaced with real
+ * database rows once the server responds (see CAREPATH_DATA_READY).
  */
 
+// Healthcare facilities shown on the maps and in the facility search lists.
 const DEMO_FACILITIES = [
   {
     id: 'st-michaels',
@@ -55,6 +58,7 @@ const DEMO_FACILITIES = [
   },
 ];
 
+// Demo patient records with their issues and emergency contacts.
 const DEMO_PATIENTS = [
   {
     id: 'jordan-lee',
@@ -183,6 +187,7 @@ const DEMO_PATIENTS = [
   },
 ];
 
+// Doctors that work at each facility.
 const HOSPITAL_DOCTORS = [
   { id: 'doc-chen', name: 'Dr. Sarah Chen', specialty: 'Family medicine', facilityId: 'st-michaels', phone: '(416) 555-0124' },
   { id: 'doc-desai', name: 'Dr. Anita Desai', specialty: 'Psychiatry', facilityId: 'st-michaels', phone: '(416) 360-4100' },
@@ -194,6 +199,7 @@ const HOSPITAL_DOCTORS = [
   { id: 'doc-bergeron', name: 'Dr. Sophie Bergeron', specialty: 'Endocrinology', facilityId: 'mount-sinai', phone: '(416) 596-4620' },
 ];
 
+// Specialists available for referrals.
 const DEMO_SPECIALISTS = [
   { id: 'spec-cardio-1', name: 'Dr. Elena Vasquez', specialty: 'Cardiology', facilityId: 'toronto-general', phone: '(416) 340-4800' },
   { id: 'spec-neuro-1', name: 'Dr. James Okonkwo', specialty: 'Neurology', facilityId: 'toronto-general', phone: '(416) 340-5200' },
@@ -205,6 +211,7 @@ const DEMO_SPECIALISTS = [
   { id: 'spec-rheum-1', name: 'Dr. Catherine Moore', specialty: 'Rheumatology', facilityId: 'womens-college', phone: '(416) 323-6200' },
 ];
 
+// Upcoming appointments shown on the hospital admin dashboard.
 let HOSPITAL_SCHEDULE = [
   {
     date: '2026-08-18',
@@ -286,6 +293,7 @@ let HOSPITAL_SCHEDULE = [
   },
 ];
 
+// Upcoming appointments shown on the provider dashboard.
 let PROVIDER_SCHEDULE = [
   {
     date: '2026-08-18',
@@ -333,8 +341,10 @@ let PROVIDER_SCHEDULE = [
   },
 ];
 
+// Default hospital for the admin demo account.
 const ADMIN_HOSPITAL_ID = 'st-michaels';
 
+// Escapes special HTML characters so user text cannot break the page.
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -344,6 +354,7 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+// Formats an ISO date like 2026-08-18 as a short readable date.
 function formatDate(dateString) {
   const parsed = new Date(`${dateString}T12:00:00`);
   if (Number.isNaN(parsed.getTime())) return 'Not on record';
@@ -354,7 +365,7 @@ function formatDate(dateString) {
   }).format(parsed);
 }
 
-/** Month and day of an ISO date, e.g. { month: 'Aug', day: '18' }. */
+// Splits an ISO date into its month and day parts, e.g. { month: 'Aug', day: '18' }.
 function dateParts(dateString) {
   const parsed = new Date(`${dateString}T12:00:00`);
   if (Number.isNaN(parsed.getTime())) return { month: '—', day: '—' };
@@ -364,14 +375,17 @@ function dateParts(dateString) {
   };
 }
 
+// Capitalizes a severity value, e.g. "high" becomes "High".
 function severityLabel(severity) {
   return severity.charAt(0).toUpperCase() + severity.slice(1);
 }
 
+// Builds the colored severity badge HTML.
 function severityBadge(severity) {
   return `<span class="severity-badge severity-${severity}">${severityLabel(severity)}</span>`;
 }
 
+// Looks up a facility by id, with a safe placeholder if it is unknown.
 function getFacility(facilityId) {
   return (
     DEMO_FACILITIES.find((f) => f.id === facilityId) || {
@@ -385,7 +399,7 @@ function getFacility(facilityId) {
   );
 }
 
-/** A doctor or specialist account by id. */
+// Looks up a doctor or specialist account by id.
 function getProvider(providerId) {
   return (
     HOSPITAL_DOCTORS.find((doctor) => doctor.id === providerId) ||
@@ -394,33 +408,41 @@ function getProvider(providerId) {
   );
 }
 
+// Returns the patients whose main doctor matches the given id.
 function getDoctorPatients(doctorId) {
   return DEMO_PATIENTS.filter((patient) => patient.primaryDoctorId === doctorId);
 }
 
+// Looks up a patient by id.
 function getPatient(patientId) {
   return DEMO_PATIENTS.find((p) => p.id === patientId);
 }
 
+// Returns the doctors that work at the given facility.
 function getHospitalDoctors(facilityId) {
   return HOSPITAL_DOCTORS.filter((doctor) => doctor.facilityId === facilityId);
 }
 
+// Returns the patients registered at the given facility.
 function getHospitalPatients(facilityId) {
   return DEMO_PATIENTS.filter((patient) => patient.facilityId === facilityId);
 }
 
+// Returns the appointments booked at the given facility.
 function getHospitalAppointments(facilityId) {
   return HOSPITAL_SCHEDULE.filter((appointment) => appointment.facilityId === facilityId);
 }
 
+// Builds the status badge HTML for a symptom or case.
 function issueStatusBadge(status) {
   if (status === 'resolved') return statusBadge('resolved', 'Resolved');
   if (status === 'open') return statusBadge('open', 'Open');
   return statusBadge('pending', 'Pending');
 }
 
-/* Real accounts replace all clinical demo records. Empty data stays empty until it is created. */
+// Loads the real records from the server and replaces the demo data above.
+// Pages wait on this promise before rendering. If the server cannot be
+// reached, the lists are emptied so no fake clinical data is shown.
 const CAREPATH_DATA_READY = fetch('/api/dashboard-data')
   .then((response) => response.ok ? response.json() : Promise.reject())
   .then((data) => {
@@ -458,7 +480,7 @@ const CAREPATH_DATA_READY = fetch('/api/dashboard-data')
     PROVIDER_SCHEDULE.splice(0);
   });
 
-// ─── Hamilton hospitals ───────────────────────────────────────────────────────
+// Extra Hamilton hospitals added to the facility list for the demo.
 
 DEMO_FACILITIES.push(
   {

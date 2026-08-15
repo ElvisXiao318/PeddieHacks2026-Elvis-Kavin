@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- CarePath landing page with the login and patient signup modals. -->
 <html lang="en-CA" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -10,6 +11,7 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- Top bar with navigation, theme toggle, and login button. -->
   <header class="site-header">
     <div class="container header-inner">
       <a href="index.html" class="logo">
@@ -30,6 +32,7 @@
   </header>
 
   <main>
+    <!-- Hero banner with the main call to action buttons. -->
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-copy">
@@ -63,6 +66,7 @@
       </div>
     </section>
 
+    <!-- Short explanation of what CarePath does. -->
     <section id="connect" class="section">
       <div class="container">
         <div class="section-header">
@@ -76,6 +80,7 @@
       </div>
     </section>
 
+    <!-- Feature cards for patients and care teams. -->
     <section id="features" class="section section-alt">
       <div class="container">
         <div class="section-header">
@@ -110,6 +115,7 @@
       </div>
     </section>
 
+    <!-- Security and privacy highlights. -->
     <section id="security" class="section">
       <div class="container">
         <div class="section-header">
@@ -137,6 +143,7 @@
       </div>
     </section>
 
+    <!-- Planned future work. -->
     <section id="roadmap" class="section section-alt">
       <div class="container">
         <div class="section-header">
@@ -172,7 +179,7 @@
     </div>
   </footer>
 
-  <!-- Secure Login Modal -->
+  <!-- Login modal, hidden until the login button is clicked. -->
   <div class="modal-overlay" id="login-modal" role="dialog" aria-labelledby="login-title" aria-modal="true">
     <div class="modal">
       <h2 id="login-title">Secure Login</h2>
@@ -206,6 +213,7 @@
     </div>
   </div>
 
+  <!-- Patient signup modal with the optional health card scanner. -->
   <div class="modal-overlay" id="signup-modal" role="dialog" aria-labelledby="signup-title" aria-modal="true">
     <div class="modal modal-wide">
       <h2 id="signup-title">Create your patient account</h2>

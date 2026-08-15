@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Provider dashboard: client list, client details with a care map, booking, and schedule. -->
 <html lang="en-CA" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- Top bar with the theme toggle and logout button. -->
   <header class="site-header">
     <div class="container header-inner">
       <a href="index.html" class="logo">
@@ -22,6 +24,7 @@
   </header>
 
   <div class="container dashboard-layout">
+    <!-- Sidebar buttons that switch between the panels below. -->
     <aside class="sidebar">
       <nav aria-label="Provider navigation">
         <button type="button" class="active" data-panel="clients">Clients</button>
@@ -46,7 +49,7 @@
         </div>
       </div>
 
-      <!-- Clients -->
+      <!-- Clients panel: the searchable roster and the client detail view. -->
       <section id="panel-clients" class="panel active">
         <div id="client-list-view">
           <div class="panel-heading">
@@ -62,6 +65,7 @@
           <div class="list-card client-list" id="client-list" aria-label="Client list"></div>
         </div>
 
+        <!-- Detail view for one client, hidden until a client is chosen. -->
         <div id="client-detail-view" class="client-detail-view" hidden>
           <button type="button" class="btn btn-sm back-btn" id="back-to-clients">← Back to clients</button>
 
@@ -106,6 +110,7 @@
             <div class="list-card" id="client-appointments" aria-label="Client appointments"></div>
           </section>
 
+          <!-- Care coordination card with the embedded Google map and facility search. -->
           <section class="card facility-card">
             <div class="card-heading">
               <div>
@@ -143,6 +148,7 @@
             </div>
           </section>
 
+          <!-- Medical history with a small form to log a new issue. -->
           <section class="card">
             <div class="card-heading">
               <div>
@@ -174,7 +180,7 @@
         </div>
       </section>
 
-      <!-- Book an Appointment -->
+      <!-- Booking panel: form to book a visit or refer to another provider. -->
       <section id="panel-book" class="panel">
         <div class="panel-heading">
           <div>
@@ -249,7 +255,7 @@
         </div>
       </section>
 
-      <!-- Schedule -->
+      <!-- Schedule panel: the provider's upcoming appointments. -->
       <section id="panel-schedule" class="panel">
         <div class="panel-heading">
           <div>

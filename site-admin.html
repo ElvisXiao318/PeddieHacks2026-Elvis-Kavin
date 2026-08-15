@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Site admin dashboard: add records, list hospitals, and manage staff access. -->
 <html lang="en-CA" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <!-- Top bar with the theme toggle and logout button. -->
   <header class="site-header">
     <div class="container header-inner">
       <a href="index.html" class="logo">
@@ -22,6 +24,7 @@
   </header>
 
   <div class="container dashboard-layout">
+    <!-- Sidebar buttons that switch between the panels below. -->
     <aside class="sidebar">
       <nav aria-label="Site admin navigation">
         <button type="button" class="active" data-panel="add">Add Record</button>
@@ -40,7 +43,7 @@
         <span class="secure-badge">Site-wide access</span>
       </div>
 
-      <!-- Add Record -->
+      <!-- Add Record panel: form to create hospitals and staff accounts. -->
       <section id="panel-add" class="panel active">
         <div class="panel-heading">
           <div>
@@ -65,6 +68,7 @@
                 <label for="site-admin-name-field">Full name <span class="required">*</span></label>
                 <input id="site-admin-name-field" required>
               </div>
+              <!-- Searchable hospital picker. The hidden input stores the chosen id. -->
               <div class="form-group provision-staff-field facility-directory">
                 <label for="site-admin-hospital-search">Hospital <span class="required">*</span></label>
                 <input type="search" id="site-admin-hospital-search" placeholder="Search hospitals…" autocomplete="off">
@@ -104,7 +108,7 @@
         </div>
       </section>
 
-      <!-- Hospitals -->
+      <!-- Hospitals panel: every hospital with remove buttons. -->
       <section id="panel-hospitals" class="panel">
         <div class="panel-heading">
           <div>
@@ -118,7 +122,7 @@
         </div>
       </section>
 
-      <!-- Staff Directory -->
+      <!-- Staff Directory panel: pick a hospital to see who has access there. -->
       <section id="panel-directory" class="panel">
         <div class="panel-heading">
           <div>
@@ -128,6 +132,7 @@
           </div>
         </div>
         <div class="card" style="margin-bottom:1.25rem;">
+          <!-- Searchable hospital picker. The hidden input stores the chosen id. -->
           <div class="form-group facility-directory" style="margin:0;">
             <label for="directory-hospital-search">Hospital</label>
             <input type="search" id="directory-hospital-search" placeholder="Search hospitals…" autocomplete="off">

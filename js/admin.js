@@ -1,17 +1,22 @@
 /**
- * CarePath — Hospital admin dashboard
+ * CarePath hospital admin dashboard.
+ * Lets a hospital administrator view schedules, book appointments,
+ * and browse the clients registered at their hospital.
  */
 
+// Only logged in hospital admins may view this page.
 requireAuth('admin');
 
-/* The hospital this administrator belongs to, stored at login. */
+// The hospital this administrator belongs to, stored at login.
 const hospitalId = getStored(STORAGE_KEYS.hospitalId, '') || ADMIN_HOSPITAL_ID;
 
+// Page state: which doctor, client, and facility are selected.
 let selectedDoctorId = null;
 let selectedPatientId = null;
 let selectedClientFacilityId = null;
 let clientSearchQuery = '';
 
+// Builds the HTML for one appointment row.
 function appointmentMarkup(appointment) {
   return `
     <article class="appointment-item">
@@ -33,6 +38,7 @@ function appointmentMarkup(appointment) {
   `;
 }
 
+// Draws every appointment at this hospital, sorted by date and time.
 function renderHospitalSchedule() {
   const el = document.getElementById('hospital-schedule-list');
   if (!el) return;
@@ -49,6 +55,7 @@ function renderHospitalSchedule() {
   el.innerHTML = appointments.map(appointmentMarkup).join('');
 }
 
+// Draws the appointments for the doctor chosen in the dropdown.
 function renderDoctorSchedule() {
   const el = document.getElementById('doctor-schedule-list');
   if (!el) return;
@@ -71,6 +78,7 @@ function renderDoctorSchedule() {
   el.innerHTML = appointments.map(appointmentMarkup).join('');
 }
 
+// Sets up the schedule tabs and the doctor dropdown, then draws both views.
 function initScheduleViews() {
   const doctors = getHospitalDoctors(hospitalId);
   const select = document.getElementById('schedule-doctor-select');
@@ -107,6 +115,8 @@ function initScheduleViews() {
   renderHospitalSchedule();
 }
 
+// Sets up the booking form: fills the patient and doctor dropdowns and
+// submits new appointments to the server.
 function initAdminBooking() {
   const patients = getHospitalPatients(hospitalId);
   const doctors = getHospitalDoctors(hospitalId);
@@ -169,6 +179,7 @@ function initAdminBooking() {
   });
 }
 
+// Switches which dashboard panel is visible and highlights its nav button.
 function showPanel(panelId) {
   document.querySelectorAll('.sidebar nav button[data-panel]').forEach((button) => {
     button.classList.toggle('active', button.getAttribute('data-panel') === panelId);
@@ -183,12 +194,14 @@ function showPanel(panelId) {
   }
 }
 
+// Wires up the sidebar navigation buttons.
 function initPanels() {
   document.querySelectorAll('.sidebar nav button[data-panel]').forEach((button) => {
     button.addEventListener('click', () => showPanel(button.getAttribute('data-panel')));
   });
 }
 
+// Draws the searchable list of clients registered at this hospital.
 function renderClientList() {
   const el = document.getElementById('admin-client-list');
   if (!el) return;
@@ -226,12 +239,15 @@ function renderClientList() {
     .join('');
 }
 
+// Closes the client detail view and shows the client list again.
 function hideClientDetail() {
   selectedPatientId = null;
   document.getElementById('admin-client-list-view')?.removeAttribute('hidden');
   document.getElementById('admin-client-detail-view')?.setAttribute('hidden', '');
 }
 
+// Opens the detail view for one client: profile, emergency contacts,
+// facility map, and medical history.
 function showClientDetail(patientId) {
   const patient = getPatient(patientId);
   if (!patient || patient.facilityId !== hospitalId) return;
@@ -273,6 +289,7 @@ function showClientDetail(patientId) {
   renderClientHistory(patient);
 }
 
+// Draws the client's symptoms and care cases, newest first.
 function renderClientHistory(patient) {
   const el = document.getElementById('admin-client-history');
   if (!el) return;
@@ -309,6 +326,7 @@ function renderClientHistory(patient) {
     .join('');
 }
 
+// Shows the client's selected care facility with a call button.
 function renderClientSelectedFacility() {
   const facility = getFacility(selectedClientFacilityId);
   const el = document.getElementById('admin-client-selected-facility');
@@ -326,6 +344,7 @@ function renderClientSelectedFacility() {
   `;
 }
 
+// Draws the illustrated map with a marker button for each facility.
 function renderClientFacilityMap() {
   const el = document.getElementById('admin-client-facility-map');
   if (!el) return;
@@ -351,6 +370,7 @@ function renderClientFacilityMap() {
   `;
 }
 
+// Draws the searchable facility list, filtered by the typed text.
 function renderClientFacilityList(filter = '') {
   const el = document.getElementById('admin-client-facility-list');
   if (!el) return;
@@ -382,6 +402,7 @@ function renderClientFacilityList(filter = '') {
     : '<div class="empty-state"><p>No facilities match your search.</p></div>';
 }
 
+// Selects a facility and refreshes the facility card, map, and list.
 function highlightClientFacility(facilityId) {
   if (!DEMO_FACILITIES.some((item) => item.id === facilityId)) return;
   selectedClientFacilityId = facilityId;
@@ -390,6 +411,8 @@ function highlightClientFacility(facilityId) {
   renderClientFacilityList(document.getElementById('admin-client-facility-search')?.value || '');
 }
 
+// Wires up the client search box, client clicks, the back button, the
+// facility search dropdown, and the map marker clicks.
 function initClientList() {
   document.getElementById('admin-client-search')?.addEventListener('input', (event) => {
     clientSearchQuery = event.target.value;
@@ -437,7 +460,8 @@ function initClientList() {
   });
 }
 
-/** Facilities without patients are absent from the dashboard feed, so fall back to the hospital directory. */
+// Facilities without patients are absent from the dashboard feed, so this
+// falls back to the hospital directory to find the hospital's name.
 async function resolveHospital() {
   const facility = getFacility(hospitalId);
   if (facility.name !== 'Facility not on record') return facility;
@@ -450,6 +474,7 @@ async function resolveHospital() {
   }
 }
 
+// Starts the page once the shared data has loaded from the server.
 document.addEventListener('DOMContentLoaded', async () => {
   await CAREPATH_DATA_READY;
   const hospital = await resolveHospital();

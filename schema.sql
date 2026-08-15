@@ -1,5 +1,9 @@
+-- CarePath database schema. Every table uses text ids and IF NOT EXISTS
+-- so the script can run safely on an existing database.
+
 PRAGMA foreign_keys = ON;
 
+-- Healthcare facilities that staff and patients belong to.
 CREATE TABLE IF NOT EXISTS hospitals (
   hospital_id TEXT PRIMARY KEY,
   hospital_name TEXT NOT NULL,
@@ -7,6 +11,7 @@ CREATE TABLE IF NOT EXISTS hospitals (
   phone TEXT
 );
 
+-- Doctor accounts, each tied to one hospital.
 CREATE TABLE IF NOT EXISTS doctors (
   doctor_id TEXT PRIMARY KEY,
   doctor_name TEXT NOT NULL,
@@ -17,6 +22,7 @@ CREATE TABLE IF NOT EXISTS doctors (
   phone TEXT
 );
 
+-- Specialist accounts, each tied to one hospital.
 CREATE TABLE IF NOT EXISTS specialists (
   specialist_id TEXT PRIMARY KEY,
   specialist_name TEXT NOT NULL,
@@ -27,6 +33,7 @@ CREATE TABLE IF NOT EXISTS specialists (
   phone TEXT
 );
 
+-- Hospital administrator accounts, each tied to one hospital.
 CREATE TABLE IF NOT EXISTS admins (
   admin_id TEXT PRIMARY KEY,
   admin_name TEXT NOT NULL,
@@ -35,6 +42,7 @@ CREATE TABLE IF NOT EXISTS admins (
   password_hash TEXT NOT NULL
 );
 
+-- Website administrator accounts. Not tied to any hospital.
 CREATE TABLE IF NOT EXISTS site_admins (
   site_admin_id TEXT PRIMARY KEY,
   site_admin_name TEXT NOT NULL,
@@ -42,6 +50,7 @@ CREATE TABLE IF NOT EXISTS site_admins (
   password_hash TEXT NOT NULL
 );
 
+-- Patient accounts with their personal and medical details.
 CREATE TABLE IF NOT EXISTS patients (
   patient_id TEXT PRIMARY KEY,
   patient_name TEXT NOT NULL,
@@ -57,6 +66,7 @@ CREATE TABLE IF NOT EXISTS patients (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- People to call in an emergency, removed with their patient.
 CREATE TABLE IF NOT EXISTS emergency_contacts (
   contact_id TEXT PRIMARY KEY,
   patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
@@ -65,6 +75,7 @@ CREATE TABLE IF NOT EXISTS emergency_contacts (
   phone TEXT NOT NULL
 );
 
+-- Booked and requested visits between a patient and a doctor.
 CREATE TABLE IF NOT EXISTS appointments (
   appointment_id TEXT PRIMARY KEY,
   patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
@@ -79,22 +90,26 @@ CREATE TABLE IF NOT EXISTS appointments (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Symptoms a patient has logged, pending until marked resolved.
 CREATE TABLE IF NOT EXISTS symptoms (
   symptom_id TEXT PRIMARY KEY, patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
   symptom_text TEXT NOT NULL, severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high')),
   status TEXT NOT NULL DEFAULT 'pending', logged_date TEXT NOT NULL, resolved_date TEXT
 );
 
+-- Messages sent to a patient by their care team.
 CREATE TABLE IF NOT EXISTS care_messages (
   message_id TEXT PRIMARY KEY, patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
   sender TEXT NOT NULL, subject TEXT NOT NULL, channel TEXT NOT NULL, message_date TEXT NOT NULL
 );
 
+-- Ongoing care cases being tracked for a patient.
 CREATE TABLE IF NOT EXISTS care_cases (
   case_id TEXT PRIMARY KEY, patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
   title TEXT NOT NULL, status TEXT NOT NULL, updated_date TEXT NOT NULL, note TEXT NOT NULL
 );
 
+-- Medications a patient is currently taking.
 CREATE TABLE IF NOT EXISTS medications (
   medication_id TEXT PRIMARY KEY, patient_id TEXT NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
   medication_name TEXT NOT NULL, dosage TEXT NOT NULL, frequency TEXT NOT NULL

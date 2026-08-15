@@ -1,9 +1,14 @@
 /**
- * CarePath — Patient dashboard
+ * CarePath patient dashboard.
+ * Shows appointments, symptoms, cases, medications, emergency contacts,
+ * and the interactive care facility map.
  */
 
+// Only logged in patients may view this page.
 requireAuth('patient');
 
+// Loads the signed in patient's real profile from the server and fills in
+// the welcome header, personal details, and every dashboard list.
 async function hydratePatientProfile() {
   const patientId = getStored(STORAGE_KEYS.userId, '');
   if (!patientId) return;
@@ -27,6 +32,7 @@ async function hydratePatientProfile() {
   } catch { /* The dashboard retains its illustrative values if the API is unavailable. */ }
 }
 
+// Loads the patient's upcoming appointments from the server.
 async function loadAppointments() {
   const patientId = getStored(STORAGE_KEYS.userId, '');
   const token = getStored(STORAGE_KEYS.sessionToken, '');
@@ -44,6 +50,7 @@ async function loadAppointments() {
   }
 }
 
+// Placeholder appointments, replaced by real data after login.
 const DEMO_APPOINTMENTS = [
   {
     date: '2026-08-20',
@@ -63,6 +70,7 @@ const DEMO_APPOINTMENTS = [
   },
 ];
 
+// Placeholder symptom log entries.
 const DEMO_SYMPTOMS = [
   {
     text: 'Intermittent dizziness when standing',
@@ -79,6 +87,7 @@ const DEMO_SYMPTOMS = [
   },
 ];
 
+// Placeholder care team messages.
 const DEMO_MISSED = [
   {
     from: 'Dr. Sarah Chen',
@@ -88,6 +97,7 @@ const DEMO_MISSED = [
   },
 ];
 
+// Placeholder open care cases.
 const DEMO_CASES = [
   {
     title: 'Lab results review',
@@ -103,17 +113,20 @@ const DEMO_CASES = [
   },
 ];
 
+// Placeholder medication list.
 const DEMO_MEDICATIONS = [
   { name: 'Metformin', dosage: '500 mg', frequency: 'Twice daily' },
   { name: 'Lisinopril', dosage: '10 mg', frequency: 'Once daily' },
 ];
 
+// Placeholder emergency contacts.
 const EMERGENCY_CONTACTS = [
   { name: 'Alex Morgan', relationship: 'Partner', phone: '(416) 555-0188' },
   { name: 'Dr. Sarah Chen', relationship: 'Primary provider', phone: '(416) 555-0124' },
   { name: 'Emergency services', relationship: 'Immediate danger', phone: '911' },
 ];
 
+// Nearby facilities shown on this page's map and search list.
 const DEMO_FACILITIES = [
   {
     id: 'st-michaels',
@@ -167,11 +180,14 @@ const DEMO_FACILITIES = [
   },
 ];
 
+// The facility the patient currently has selected, remembered between visits.
 let selectedFacilityId = getStored('carepath-facility', 'st-michaels');
+// Zoom and pan state for the illustrated facility map.
 let mapScale = 1;
 let mapOffset = { x: 0, y: 0 };
 let mapDragState = null;
 
+// Escapes special HTML characters so user text cannot break the page.
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -181,6 +197,7 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+// Formats an ISO date like 2026-08-18 as a short readable date.
 function formatDate(dateString) {
   return new Intl.DateTimeFormat('en-CA', {
     month: 'short',
@@ -189,14 +206,17 @@ function formatDate(dateString) {
   }).format(new Date(`${dateString}T12:00:00`));
 }
 
+// Capitalizes a severity value, e.g. "high" becomes "High".
 function severityLabel(severity) {
   return severity.charAt(0).toUpperCase() + severity.slice(1);
 }
 
+// Builds the colored severity badge HTML.
 function severityBadge(severity) {
   return `<span class="severity-badge severity-${severity}">${severityLabel(severity)}</span>`;
 }
 
+// Draws the upcoming appointments list.
 function renderAppointments() {
   const el = document.getElementById('appointments-list');
   if (!el) return;
@@ -230,6 +250,7 @@ function renderAppointments() {
     .join('');
 }
 
+// Builds the HTML for one symptom entry, including its badges.
 function symptomMarkup(symptom) {
   const isResolved = symptom.status === 'resolved';
   const status = isResolved ? statusBadge('resolved', 'Resolved') : statusBadge('open', 'Pending');
@@ -251,6 +272,7 @@ function symptomMarkup(symptom) {
   `;
 }
 
+// Draws the pending and resolved symptom lists and updates their counters.
 function renderSymptoms() {
   const pending = DEMO_SYMPTOMS.filter((symptom) => symptom.status !== 'resolved');
   const resolved = DEMO_SYMPTOMS.filter((symptom) => symptom.status === 'resolved');
@@ -273,6 +295,7 @@ function renderSymptoms() {
   document.getElementById('resolved-count').textContent = resolved.length;
 }
 
+// Draws the list of new messages from the care team.
 function renderMissed() {
   const el = document.getElementById('missed-list');
   if (!el) return;
@@ -297,6 +320,7 @@ function renderMissed() {
     .join('');
 }
 
+// Draws the list of care cases with a badge for each status.
 function renderCases() {
   const el = document.getElementById('cases-list');
   if (!el) return;
@@ -328,6 +352,7 @@ function renderCases() {
     .join('');
 }
 
+// Draws the medication list.
 function renderMedications() {
   const el = document.getElementById('medications-list');
   if (!el) return;
@@ -346,6 +371,7 @@ function renderMedications() {
     .join('');
 }
 
+// Draws the emergency contacts with clickable phone numbers.
 function renderEmergencyContacts() {
   const el = document.getElementById('emergency-contacts');
   if (!el) return;
@@ -365,6 +391,7 @@ function renderEmergencyContacts() {
     .join('');
 }
 
+// Shows the currently selected facility card with directions and call buttons.
 function renderSelectedFacility() {
   const facility = DEMO_FACILITIES.find((item) => item.id === selectedFacilityId) || DEMO_FACILITIES[0];
   const el = document.getElementById('selected-facility');
@@ -390,6 +417,7 @@ function renderSelectedFacility() {
   `;
 }
 
+// Draws the illustrated map with a marker button for each facility.
 function renderFacilityMap() {
   const canvas = document.getElementById('facility-map-canvas');
   if (!canvas) return;
@@ -416,6 +444,7 @@ function renderFacilityMap() {
   applyMapTransform();
 }
 
+// Applies the current zoom and pan values to the map canvas.
 function applyMapTransform() {
   const canvas = document.getElementById('facility-map-canvas');
   if (!canvas) return;
@@ -423,6 +452,8 @@ function applyMapTransform() {
   canvas.style.transform = `translate3d(${mapOffset.x}px, ${mapOffset.y}px, 0) scale(${mapScale})`;
 }
 
+// Moves the map so the chosen facility sits in the center, zooming in a bit
+// when the user picked it directly.
 function centerMapOnFacility(facilityId, zoomToSelection = true) {
   const map = document.getElementById('facility-map');
   const facility = DEMO_FACILITIES.find((item) => item.id === facilityId);
@@ -445,6 +476,7 @@ function centerMapOnFacility(facilityId, zoomToSelection = true) {
   applyMapTransform();
 }
 
+// Zooms the map toward a focus point, keeping the zoom within safe limits.
 function zoomMap(nextScale, focusX, focusY) {
   const map = document.getElementById('facility-map');
   if (!map) return;
@@ -461,12 +493,14 @@ function zoomMap(nextScale, focusX, focusY) {
   applyMapTransform();
 }
 
+// Returns the map to its default zoom and position.
 function resetMap() {
   mapScale = 1;
   mapOffset = { x: 0, y: 0 };
   applyMapTransform();
 }
 
+// Enables dragging, mouse wheel zoom, and the zoom toolbar buttons on the map.
 function initMapInteractions() {
   const map = document.getElementById('facility-map');
   const canvas = document.getElementById('facility-map-canvas');
@@ -531,6 +565,7 @@ function initMapInteractions() {
   document.getElementById('map-reset')?.addEventListener('click', resetMap);
 }
 
+// Draws the searchable facility list, filtered by the typed text.
 function renderFacilityList(filter = '') {
   const el = document.getElementById('facility-list');
   if (!el) return;
@@ -562,6 +597,7 @@ function renderFacilityList(filter = '') {
     : '<div class="empty-state"><p>No nearby facilities match your search.</p></div>';
 }
 
+// Makes a facility the selected one and refreshes the card, map, and list.
 function selectFacility(facilityId) {
   if (!DEMO_FACILITIES.some((facility) => facility.id === facilityId)) return;
   selectedFacilityId = facilityId;
@@ -572,6 +608,7 @@ function selectFacility(facilityId) {
   centerMapOnFacility(facilityId);
 }
 
+// Sets up the facility search box, dropdown list, and map marker clicks.
 function initFacilitySelector() {
   if (!DEMO_FACILITIES.some((facility) => facility.id === selectedFacilityId)) {
     selectedFacilityId = DEMO_FACILITIES[0].id;
@@ -617,6 +654,7 @@ function initFacilitySelector() {
   });
 }
 
+// Switches which dashboard panel is visible and highlights its nav button.
 function showPanel(panelId) {
   document.querySelectorAll('.sidebar nav button[data-panel]').forEach((button) => {
     button.classList.toggle('active', button.getAttribute('data-panel') === panelId);
@@ -627,6 +665,7 @@ function showPanel(panelId) {
   });
 }
 
+// Wires up the sidebar navigation and any jump to panel buttons.
 function initPanels() {
   document.querySelectorAll('.sidebar nav button[data-panel]').forEach((button) => {
     button.addEventListener('click', () => showPanel(button.getAttribute('data-panel')));
@@ -637,6 +676,7 @@ function initPanels() {
   });
 }
 
+// Wires up the pending and resolved tabs on the symptoms panel.
 function initSymptomFilters() {
   document.querySelectorAll('[data-symptom-filter]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -655,6 +695,7 @@ function initSymptomFilters() {
   });
 }
 
+// Handles the log a symptom form and adds the saved symptom to the list.
 function initSymptomForm() {
   document.getElementById('symptom-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -674,6 +715,7 @@ function initSymptomForm() {
   });
 }
 
+// Handles the request an appointment form and adds the new request in order.
 function initAppointmentForm() {
   document.getElementById('appointment-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -715,6 +757,8 @@ function initAppointmentForm() {
   });
 }
 
+// Starts the page: clears the placeholder data, draws every section, wires
+// up the controls, then loads the real profile and appointments.
 document.addEventListener('DOMContentLoaded', async () => {
   DEMO_APPOINTMENTS.splice(0);
   DEMO_SYMPTOMS.splice(0);

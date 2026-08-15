@@ -1,20 +1,26 @@
 /**
- * CarePath — Healthcare provider dashboard
+ * CarePath healthcare provider dashboard.
+ * Lets doctors and specialists view their clients, dive into a client's
+ * details and care coordination map, book appointments, and see schedules.
  */
 
+// Only logged in providers may view this page.
 requireAuth('provider');
 
+// The signed in provider's id and the choices offered when booking.
 const PROVIDER_ID = getStored(STORAGE_KEYS.userId, '');
 const APPOINTMENT_TYPES = ['Follow-up', 'Consultation', 'Specialist consult', 'Lab review', 'Check-up', 'Urgent visit'];
 const PROVIDER_RESULT_LIMIT = 30;
 
+// Page state: which client, facility, and booking doctor are selected.
 let selectedPatientId = null;
 let selectedClientFacilityId = null;
 let selectedBookingDoctorId = null;
 let clientSearchQuery = '';
 let scope = 'mine';
 
-/** The signed-in doctor or specialist. Falls back to the name stored at login. */
+// Returns the signed in doctor or specialist, falling back to the name
+// stored at login when the account is not in the loaded provider lists.
 function currentProvider() {
   const provider = getProvider(PROVIDER_ID);
   if (provider) return provider;
@@ -27,6 +33,7 @@ function currentProvider() {
   };
 }
 
+// Fills in the welcome header, subtitle, page title, and the scope dropdown.
 function renderProviderIdentity() {
   const provider = currentProvider();
   const facility = provider.facilityId ? getFacility(provider.facilityId) : null;
@@ -55,7 +62,8 @@ function renderProviderIdentity() {
   document.title = `${provider.name} — CarePath`;
 }
 
-/** Patients in the current scope: the provider's own roster, or the whole facility. */
+// Returns the patients in the current scope: the provider's own roster,
+// or everyone at the provider's facility.
 function scopedPatients() {
   const provider = currentProvider();
   if (scope === 'facility') {
@@ -69,7 +77,7 @@ function scopedPatients() {
   );
 }
 
-/** Appointments in the current scope. */
+// Returns the appointments in the current scope, sorted by date and time.
 function scopedAppointments() {
   const provider = currentProvider();
   const appointments = PROVIDER_SCHEDULE.filter((appointment) =>
@@ -82,6 +90,7 @@ function scopedAppointments() {
   );
 }
 
+// Switches which dashboard panel is visible and highlights its nav button.
 function showPanel(panelId) {
   document.querySelectorAll('.sidebar nav button[data-panel]').forEach((button) => {
     button.classList.toggle('active', button.getAttribute('data-panel') === panelId);
@@ -91,11 +100,13 @@ function showPanel(panelId) {
     panel.classList.toggle('active', panel.id === `panel-${panelId}`);
   });
 
+  // Leaving the clients panel closes any open client detail view.
   if (panelId !== 'clients') {
     hideClientDetail();
   }
 }
 
+// Wires up the sidebar navigation and any jump to panel buttons.
 function initPanels() {
   document.querySelectorAll('.sidebar nav button[data-panel]').forEach((button) => {
     button.addEventListener('click', () => showPanel(button.getAttribute('data-panel')));
@@ -106,6 +117,7 @@ function initPanels() {
   });
 }
 
+// Redraws the client list and schedule when the scope dropdown changes.
 function initScope() {
   document.getElementById('provider-scope')?.addEventListener('change', (event) => {
     scope = event.target.value;
@@ -116,6 +128,7 @@ function initScope() {
   });
 }
 
+// Draws the searchable client list with a summary row for each patient.
 function renderClientList() {
   const el = document.getElementById('client-list');
   if (!el) return;
@@ -164,12 +177,15 @@ function renderClientList() {
     .join('');
 }
 
+// Closes the client detail view and shows the client list again.
 function hideClientDetail() {
   selectedPatientId = null;
   document.getElementById('client-list-view')?.removeAttribute('hidden');
   document.getElementById('client-detail-view')?.setAttribute('hidden', '');
 }
 
+// Opens the detail view for one client: profile, emergency contacts,
+// care coordination map, medical history, and appointments.
 function showClientDetail(patientId) {
   const patient = getPatient(patientId);
   if (!patient) return;
@@ -223,6 +239,7 @@ function showClientDetail(patientId) {
   renderClientAppointments(patient);
 }
 
+// Draws the appointments booked for the open client.
 function renderClientAppointments(patient) {
   const el = document.getElementById('client-appointments');
   if (!el) return;
@@ -249,6 +266,8 @@ function renderClientAppointments(patient) {
     : '<div class="empty-state"><p>No appointments booked for this client.</p></div>';
 }
 
+// Draws the client's symptoms and care cases, newest first, with a
+// mark resolved button on symptoms that can still be resolved.
 function renderClientHistory(patient) {
   const el = document.getElementById('client-history');
   if (!el) return;
@@ -291,6 +310,7 @@ function renderClientHistory(patient) {
   });
 }
 
+// Asks the server to mark a symptom resolved and updates the page.
 async function resolveIssue(symptomId) {
   const patient = getPatient(selectedPatientId);
   if (!patient) return;
@@ -311,6 +331,7 @@ async function resolveIssue(symptomId) {
   }
 }
 
+// Shows a success or error message under the add issue form.
 function setAddIssueMessage(message, success = false) {
   const element = document.getElementById('add-issue-message');
   if (!element) return;
@@ -319,6 +340,7 @@ function setAddIssueMessage(message, success = false) {
   element.style.color = success ? 'var(--success)' : 'var(--danger)';
 }
 
+// Handles the add issue form and adds the saved issue to the history.
 function initAddIssueForm() {
   document.getElementById('add-issue-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -346,6 +368,7 @@ function initAddIssueForm() {
   });
 }
 
+// Shows the client's selected care facility with directions and call buttons.
 function renderClientSelectedFacility() {
   const facility = getFacility(selectedClientFacilityId);
   const el = document.getElementById('client-selected-facility');
@@ -371,6 +394,7 @@ function renderClientSelectedFacility() {
   `;
 }
 
+// Points the embedded Google map at the selected facility.
 function renderClientFacilityMap() {
   const iframe = document.getElementById('client-gmap-iframe');
   if (!iframe) return;
@@ -381,6 +405,7 @@ function renderClientFacilityMap() {
   if (iframe.getAttribute('src') !== src) iframe.setAttribute('src', src);
 }
 
+// Draws the searchable facility list, filtered by the typed text.
 function renderClientFacilityList(filter = '') {
   const el = document.getElementById('client-facility-list');
   if (!el) return;
@@ -412,6 +437,7 @@ function renderClientFacilityList(filter = '') {
     : '<div class="empty-state"><p>No facilities match your search.</p></div>';
 }
 
+// Selects a facility and refreshes the facility card, map, and list.
 function highlightClientFacility(facilityId) {
   if (!DEMO_FACILITIES.some((f) => f.id === facilityId)) return;
   selectedClientFacilityId = facilityId;
@@ -420,6 +446,8 @@ function highlightClientFacility(facilityId) {
   renderClientFacilityList(document.getElementById('client-facility-search')?.value || '');
 }
 
+// Wires up the client search box, client clicks, the back button, and the
+// facility search dropdown inside the client detail view.
 function initClientList() {
   document.getElementById('client-search')?.addEventListener('input', (event) => {
     clientSearchQuery = event.target.value;
@@ -464,6 +492,7 @@ function initClientList() {
 
 /* ---------- Booking ---------- */
 
+// Shows a success or error message under the booking form.
 function setBookingMessage(message, success = false) {
   const element = document.getElementById('booking-message');
   if (!element) return;
@@ -472,6 +501,7 @@ function setBookingMessage(message, success = false) {
   element.style.color = success ? 'var(--success)' : 'var(--danger)';
 }
 
+// Fills the booking form's client dropdown with the patients in scope.
 function renderBookingPatients() {
   const patientSelect = document.getElementById('booking-patient');
   if (!patientSelect) return;
@@ -485,6 +515,8 @@ function renderBookingPatients() {
   if (patients.some((patient) => patient.id === previous)) patientSelect.value = previous;
 }
 
+// Draws the provider cards that can be picked for a booking, filtered by
+// specialty and search text. Without a search it stays local to the facility.
 function renderBookingDoctors() {
   const el = document.getElementById('provider-list');
   if (!el) return;
@@ -538,6 +570,8 @@ function renderBookingDoctors() {
       : '');
 }
 
+// Sets up the booking form: fills the dropdowns, handles provider card
+// clicks, validates the fields, and submits the appointment to the server.
 function initBookingForm() {
   const specialtySelect = document.getElementById('specialty-filter');
   const typeSelect = document.getElementById('booking-type');
@@ -635,6 +669,7 @@ function initBookingForm() {
 
 /* ---------- Schedule ---------- */
 
+// Draws the schedule list with upcoming and completed appointment counts.
 function renderSchedule() {
   const el = document.getElementById('schedule-list');
   if (!el) return;
@@ -686,6 +721,7 @@ function renderSchedule() {
     .join('');
 }
 
+// Starts the page once the shared data has loaded from the server.
 document.addEventListener('DOMContentLoaded', async () => {
   await CAREPATH_DATA_READY;
   renderProviderIdentity();
