@@ -1,17 +1,19 @@
-"""CareConnect demo server. Run: python server.py, then open http://localhost:8000."""
+"""CarePath demo server. Run: python server.py, then open http://localhost:8000."""
 import csv
 import hashlib
 import json
 import secrets
 import sqlite3
+import sys
 import uuid
 from datetime import date
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-ROOT = Path(__file__).parent
-DB_PATH = ROOT / "careconnect.db"
+RESOURCE_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+DATA_ROOT = Path(sys.executable).parent if getattr(sys, "frozen", False) else RESOURCE_ROOT
+DB_PATH = DATA_ROOT / "carepath.db"
 SESSIONS = {}
 
 HOSPITALS = [
@@ -22,7 +24,7 @@ HOSPITALS = [
 ]
 
 DIRECTORY_PATHS = [
-    ROOT / "hospital_directory.csv",
+    DATA_ROOT / "hospital_directory.csv",
     Path(r"C:\Users\hp\Downloads\odhf_v1.1 - odhf_v1.1.csv"),
 ]
 
@@ -51,45 +53,48 @@ def db():
 
 def initialise_database():
     connection = db()
-    connection.executescript((ROOT / "schema.sql").read_text(encoding="utf-8"))
+    connection.executescript((RESOURCE_ROOT / "schema.sql").read_text(encoding="utf-8"))
     connection.executemany("INSERT OR IGNORE INTO hospitals VALUES (?, ?, ?, ?)", HOSPITALS)
     connection.executemany("INSERT OR IGNORE INTO hospitals VALUES (?, ?, ?, ?)", hospital_directory_rows())
-    demo_password = hash_password("CareConnect2026!")
+    demo_password = hash_password("CarePath2026!")
     hospital_rows = connection.execute("SELECT hospital_id, hospital_name FROM hospitals").fetchall()
     connection.executemany("""INSERT OR IGNORE INTO doctors
         (doctor_id, doctor_name, hospital_id, specialty, email, password_hash, phone)
         VALUES (?, ?, ?, ?, ?, ?, ?)""", [
         (f"doctor-{row['hospital_id']}", f"Dr. Care Team — {row['hospital_name']}", row["hospital_id"], "General practice",
-         f"provider-{row['hospital_id']}@careconnect.demo", demo_password, None) for row in hospital_rows])
+         f"provider-{row['hospital_id']}@carepath.demo", demo_password, None) for row in hospital_rows])
     connection.executemany("""INSERT OR IGNORE INTO specialists
         (specialist_id, specialist_name, hospital_id, specialty_type, email, password_hash, phone)
         VALUES (?, ?, ?, ?, ?, ?, ?)""", [
         (f"specialist-{row['hospital_id']}", f"Specialist Team — {row['hospital_name']}", row["hospital_id"], "Specialist care",
-         f"specialist-{row['hospital_id']}@careconnect.demo", demo_password, None) for row in hospital_rows])
+         f"specialist-{row['hospital_id']}@carepath.demo", demo_password, None) for row in hospital_rows])
     connection.executemany("""INSERT OR IGNORE INTO admins
         (admin_id, admin_name, hospital_id, email, password_hash) VALUES (?, ?, ?, ?, ?)""", [
         (f"admin-{row['hospital_id']}", f"Hospital Administrator — {row['hospital_name']}", row["hospital_id"],
-         f"admin-{row['hospital_id']}@careconnect.demo", demo_password) for row in hospital_rows])
+         f"admin-{row['hospital_id']}@carepath.demo", demo_password) for row in hospital_rows])
     connection.executemany("""INSERT OR IGNORE INTO doctors
         (doctor_id, doctor_name, hospital_id, specialty, email, password_hash, phone)
         VALUES (?, ?, ?, ?, ?, ?, ?)""", [
-        ("doc-chen", "Dr. Sarah Chen", "st-michaels", "Family medicine", "sarah.chen@careconnect.demo", demo_password, "(416) 555-0124"),
-        ("doc-patel", "Dr. Raj Patel", "st-michaels", "Internal medicine", "raj.patel@careconnect.demo", demo_password, "(416) 555-0148"),
-        ("doc-vasquez", "Dr. Elena Vasquez", "toronto-general", "Cardiology", "elena.vasquez@careconnect.demo", demo_password, "(416) 340-4800"),
+        ("doc-chen", "Dr. Sarah Chen", "st-michaels", "Family medicine", "sarah.chen@carepath.demo", demo_password, "(416) 555-0124"),
+        ("doc-patel", "Dr. Raj Patel", "st-michaels", "Internal medicine", "raj.patel@carepath.demo", demo_password, "(416) 555-0148"),
+        ("doc-vasquez", "Dr. Elena Vasquez", "toronto-general", "Cardiology", "elena.vasquez@carepath.demo", demo_password, "(416) 340-4800"),
     ])
     connection.executemany("""INSERT OR IGNORE INTO specialists
         (specialist_id, specialist_name, hospital_id, specialty_type, email, password_hash, phone)
         VALUES (?, ?, ?, ?, ?, ?, ?)""", [
-        ("spec-neuro-1", "Dr. James Okonkwo", "toronto-general", "Neurology", "james.okonkwo@careconnect.demo", demo_password, "(416) 340-5200"),
-        ("spec-ortho-1", "Dr. Priya Sharma", "mount-sinai", "Orthopedics", "priya.sharma@careconnect.demo", demo_password, "(416) 596-4500"),
+        ("spec-neuro-1", "Dr. James Okonkwo", "toronto-general", "Neurology", "james.okonkwo@carepath.demo", demo_password, "(416) 340-5200"),
+        ("spec-ortho-1", "Dr. Priya Sharma", "mount-sinai", "Orthopedics", "priya.sharma@carepath.demo", demo_password, "(416) 596-4500"),
     ])
     connection.execute("""INSERT OR IGNORE INTO admins
         (admin_id, admin_name, hospital_id, email, password_hash) VALUES (?, ?, ?, ?, ?)""",
-        ("admin-stm-1", "Morgan Blake", "st-michaels", "admin@careconnect.demo", demo_password))
+        ("admin-stm-1", "Morgan Blake", "st-michaels", "admin@carepath.demo", demo_password))
     connection.commit()
     connection.close()
 
 class Handler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(RESOURCE_ROOT), **kwargs)
+
     def send_json(self, status, payload):
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
@@ -226,5 +231,5 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     initialise_database()
-    print("CareConnect running at http://localhost:8000")
+    print("CarePath running at http://localhost:8000")
     ThreadingHTTPServer(("", 8000), Handler).serve_forever()

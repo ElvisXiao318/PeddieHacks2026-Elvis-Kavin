@@ -1,5 +1,5 @@
 /**
- * CareConnect — Patient dashboard
+ * CarePath — Patient dashboard
  */
 
 requireAuth('patient');
@@ -145,7 +145,7 @@ const DEMO_FACILITIES = [
   },
 ];
 
-let selectedFacilityId = getStored('careconnect-facility', 'st-michaels');
+let selectedFacilityId = getStored('carepath-facility', 'st-michaels');
 let mapScale = 1;
 let mapOffset = { x: 0, y: 0 };
 let mapDragState = null;
@@ -543,7 +543,7 @@ function renderFacilityList(filter = '') {
 function selectFacility(facilityId) {
   if (!DEMO_FACILITIES.some((facility) => facility.id === facilityId)) return;
   selectedFacilityId = facilityId;
-  setStored('careconnect-facility', facilityId);
+  setStored('carepath-facility', facilityId);
   renderSelectedFacility();
   renderFacilityMap();
   renderFacilityList(document.getElementById('facility-search')?.value || '');
