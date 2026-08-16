@@ -11,7 +11,7 @@ Or, for local development, install Python 3 and start the app from this folder:
 ```bash
 python server.py
 ```
-
+The easiest way is to double click the bat file.
 Then visit `http://localhost:8000`. Do not open the HTML files directly: account creation and login use the local API.
 
 ## Demo Login
